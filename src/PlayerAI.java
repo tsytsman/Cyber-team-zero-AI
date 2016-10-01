@@ -21,6 +21,7 @@ public class PlayerAI {
 
 	private static final int NUM_UNITS = 4;
 	private static final float MAINFRAME_DAMAGE_MULTIPLIER = 1.5f;
+	private static final float MAINFRAME_DEFENSE_MULTIPLIER = 1.5f;
 
 	// The latest state of the world.
 	private World world;
@@ -243,6 +244,9 @@ public class PlayerAI {
 						// point
 						cpPoints += 50;
 					}
+					if (cp.isMainframe())
+						// add 100 extra points for mainframe
+						cpPoints += 400;
 					pointsForDirection += cpPoints
 							/ Math.pow(
 									world.getPathLength(directionPoint,
@@ -251,17 +255,21 @@ public class PlayerAI {
 
 				for (Pickup p : pickups) {
 					// Only consider this pickup if the current direction
-					// decreases
-					// the path length by 1
+					// decreases the path length by 1
 					if (getDifferenceInPathLengths(
 							friendlyUnits[i].getPosition(), directionPoint,
 							p.getPosition()) != 1) {
 						continue;
 					}
-
-					// TODO: make a function like valueOfPickup(Pickup p)
 					int pickupPoints = valueOfPickup(i, p.getPickupType());
-
+					// if there is a pickup at where we are right now
+					// and it's value is greater than potential pickup
+					// ignore potential pickup
+					if (friendlyUnits[i].checkPickupResult() == PickupResult.PICK_UP_VALID) {
+						int currentPickupPoints = pointsForPickup(i);
+						if (currentPickupPoints >= pickupPoints)
+							continue;
+					}
 					pointsForDirection += pickupPoints
 							/ Math.pow(
 									world.getPathLength(directionPoint,
@@ -292,7 +300,6 @@ public class PlayerAI {
 	private int pointsForShoot(int i) {
 		// for each enemy, check what happens if all friendly units try to shot
 		// him
-		// TODO: store best enemy to shoot somewhere
 		int maxPoints = Integer.MIN_VALUE;
 		for (int j = 0; j < enemyUnits.length; j++) {
 			if (friendlyUnits[i].checkShotAgainstEnemy(enemyUnits[j]) != ShotResult.CAN_HIT_ENEMY) {
@@ -346,6 +353,11 @@ public class PlayerAI {
 		if (friendlyUnits[i].getHealth() < amountOfDamageTaken) {
 			// unit will die, and enemy will receive additional 100 points
 			amountOfPoints += 100;
+		}
+		if (numberOfMainframesControlled(enemyUnits[i].getTeam()) > 0
+				&& numberOfMainframesControlled(friendlyUnits[i].getTeam()) == 0) {
+			// if we have no mainframes, but enemy does
+			amountOfPoints = (int) (amountOfPoints * MAINFRAME_DEFENSE_MULTIPLIER);
 		}
 		return amountOfPoints;
 	}
