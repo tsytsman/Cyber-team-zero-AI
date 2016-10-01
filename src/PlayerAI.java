@@ -2,12 +2,14 @@ import com.orbischallenge.ctz.Constants;
 import com.orbischallenge.ctz.objects.EnemyUnit;
 import com.orbischallenge.ctz.objects.FriendlyUnit;
 import com.orbischallenge.ctz.objects.World;
+import com.orbischallenge.ctz.objects.ControlPoint;
 import com.orbischallenge.ctz.objects.enums.ActivateShieldResult;
 import com.orbischallenge.ctz.objects.enums.ShotResult;
 import com.orbischallenge.ctz.objects.enums.Direction;
 import com.orbischallenge.ctz.objects.enums.PickupType;
 import com.orbischallenge.ctz.objects.enums.PickupResult;
 import com.orbischallenge.ctz.objects.enums.MoveResult;
+import com.orbischallenge.ctz.objects.enums.Team;
 
 public class PlayerAI {
 
@@ -85,6 +87,43 @@ public class PlayerAI {
 	}
 
 	/**
+	 * Determine number of control points controlled by a team.
+	 * 
+	 * @param team
+	 *            Team we are interested in.
+	 * @return number of control points controlled by the team
+	 */
+	private int numberOfControlPointsControlled(Team team) {
+		ControlPoint[] controlPoints = world.getControlPoints();
+		int counter = 0;
+		for (int i = 0; i < controlPoints.length; i++) {
+			if (controlPoints[i].getControllingTeam() == team) {
+				counter++;
+			}
+		}
+		return counter;
+	}
+
+	/**
+	 * Determine number of mainframes controlled by a team.
+	 * 
+	 * @param team
+	 *            Team we are interested in.
+	 * @return number of mainframes controlled by the team
+	 */
+	private int numberOfMainframesControlled(Team team) {
+		ControlPoint[] controlPoints = world.getControlPoints();
+		int counter = 0;
+		for (int i = 0; i < controlPoints.length; i++) {
+			if (controlPoints[i].isMainframe()
+					&& controlPoints[i].getControllingTeam() == team) {
+				counter++;
+			}
+		}
+		return counter;
+	}
+
+	/**
 	 * Determine the maximum number of points we can get if we were to perform a
 	 * move action for a specific friendlyUnit.
 	 * 
@@ -133,8 +172,8 @@ public class PlayerAI {
 	}
 
 	/**
-	 * Determine the maximum potential damage 
-	 * that friendly unit will take next move
+	 * Determine the maximum potential damage that friendly unit will take next
+	 * move
 	 * 
 	 * @param i
 	 *            The index of the friendlyUnit we are interested in.
@@ -157,7 +196,7 @@ public class PlayerAI {
 				* damageMultiplier;
 		return amountOfDamageTakenWithMultiplier;
 	}
-	
+
 	/**
 	 * Determine the maximum number of points we can get if we were to perform a
 	 * pickup action for a specific friendlyUnit.
@@ -169,17 +208,33 @@ public class PlayerAI {
 	private int pointsForPickup(int i) {
 		PickupType currentPickupType = world.getPickupAtPosition(
 				friendlyUnits[i].getPosition()).getPickupType();
-		
+
 		int damageWillTake = maximumPotentialDamage(i);
-		//if pickup type is a health kit
-		if (currentPickupType == PickupType.REPAIR_KIT){
-			if(damageWillTake>=20){
-				//if we will take more than 20 dmg next move
-				//picking up repair kit will not be beneficial
+		// if pickup type is a health kit
+		if (currentPickupType == PickupType.REPAIR_KIT) {
+			if (damageWillTake >= 20) {
+				// if we will take more than 20 dmg next move
+				// picking up repair kit will not be beneficial
 				return 0;
 			} else {
-				//net Health Gained * 10 points + 50 for pickup
-				return (20 - damageWillTake)*10 + 50;
+				// net Health Gained * 10 points + 50 for pickup
+				return (20 - damageWillTake) * 10 + 50;
+			}
+		}
+		if (currentPickupType == PickupType.SHIELD) {
+			if (damageWillTake >= friendlyUnits[i].getHealth()) {
+				// if we will die in next move
+				// picking up shield will not be beneficial
+				// unless we have a mainframe
+				if (numberOfMainframesControlled(friendlyUnits[i].getTeam()) == 0) {
+					return 0;
+				} else {
+					// TODO: figure out a better value of shield
+					return 100;
+				}
+			} else {
+				// TODO: figure out a better value of shield
+				return 100;
 			}
 		}
 		return 0;
