@@ -123,6 +123,24 @@ public class PlayerAI {
 		// the other enemy has a mainframe and we do not
 
 		// calculate amount of damage we might take next turn
+		int amountOfDamageTaken = maximumPotentialDamage(i);
+		int amountOfPoints = amountOfDamageTaken * 10;
+		if (friendlyUnits[i].getHealth() < amountOfDamageTaken) {
+			// unit will die, and enemy will receive additional 100 points
+			amountOfPoints += 100;
+		}
+		return amountOfPoints;
+	}
+
+	/**
+	 * Determine the maximum potential damage 
+	 * that friendly unit will take next move
+	 * 
+	 * @param i
+	 *            The index of the friendlyUnit we are interested in.
+	 * @return maximum damage our unit will take next turn
+	 */
+	private int maximumPotentialDamage(int i) {
 		int amountOfDamageTaken = 0;
 		int damageMultiplier = 0;
 		for (int j = 0; j < enemyUnits.length; j++) {
@@ -137,14 +155,9 @@ public class PlayerAI {
 		}
 		int amountOfDamageTakenWithMultiplier = amountOfDamageTaken
 				* damageMultiplier;
-		int amountOfPoints = amountOfDamageTakenWithMultiplier * 10;
-		if (friendlyUnits[i].getHealth() < amountOfDamageTakenWithMultiplier) {
-			// unit will die, and enemy will receive additional 100 points
-			amountOfPoints += 100;
-		}
-		return amountOfPoints;
+		return amountOfDamageTakenWithMultiplier;
 	}
-
+	
 	/**
 	 * Determine the maximum number of points we can get if we were to perform a
 	 * pickup action for a specific friendlyUnit.
@@ -154,6 +167,21 @@ public class PlayerAI {
 	 * @return An estimate of the number of points for picking up.
 	 */
 	private int pointsForPickup(int i) {
+		PickupType currentPickupType = world.getPickupAtPosition(
+				friendlyUnits[i].getPosition()).getPickupType();
+		
+		int damageWillTake = maximumPotentialDamage(i);
+		//if pickup type is a health kit
+		if (currentPickupType == PickupType.REPAIR_KIT){
+			if(damageWillTake>=20){
+				//if we will take more than 20 dmg next move
+				//picking up repair kit will not be beneficial
+				return 0;
+			} else {
+				//net Health Gained * 10 points + 50 for pickup
+				return (20 - damageWillTake)*10 + 50;
+			}
+		}
 		return 0;
 	}
 
