@@ -225,6 +225,9 @@ public class PlayerAI {
 						// point
 						cpPoints += 50;
 					}
+					if(cp.isMainframe())
+						//add 100 extra points for mainframe
+						cpPoints += 400;
 					pointsForDirection += cpPoints
 							/ Math.pow(world.getPathLength(directionPoint,
 									cp.getPosition()) + 1, 1.5f);
@@ -239,6 +242,14 @@ public class PlayerAI {
 						continue;
 					}
 					int pickupPoints = valueOfPickup(i, p.getPickupType());
+					//if there is a pickup at where we are right now
+					//and it's value is greater than potential pickup
+					//ignore potential pickup
+					if (friendlyUnits[i].checkPickupResult()==PickupResult.PICK_UP_VALID){
+						int currentPickupPoints = pointsForPickup(i);
+						if (currentPickupPoints >= pickupPoints)
+							continue;
+					}
 					pointsForDirection += pickupPoints
 							/ Math.pow(world.getPathLength(directionPoint,
 									p.getPosition()) + 1, 1.5f);
