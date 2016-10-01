@@ -6,6 +6,7 @@ import com.orbischallenge.ctz.objects.enums.ActivateShieldResult;
 import com.orbischallenge.ctz.objects.enums.ShotResult;
 import com.orbischallenge.ctz.objects.enums.Direction;
 import com.orbischallenge.ctz.objects.enums.PickupType;
+import com.orbischallenge.ctz.objects.enums.MoveResult;
 
 
 public class PlayerAI {
@@ -28,7 +29,13 @@ public class PlayerAI {
      * @return True if the friendlyUnit can make a move action, false otherwise.
      */
     private boolean canMove(int i) {
-    	return true;
+    	// Check each direction to determine if the unit can move in that direction
+    	for (Direction d : Direction.values()) {
+    		if (friendlyUnits[i].checkMove(d) == MoveResult.MOVE_VALID) {
+    			return true;
+    		}
+    	}
+    	return false;
     }
     
     /**
