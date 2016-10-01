@@ -245,7 +245,7 @@ public class PlayerAI {
 						cpPoints += 50;
 					}
 					if (cp.isMainframe())
-						// add 100 extra points for mainframe
+						// add 400 extra points for mainframe
 						cpPoints += 400;
 					pointsForDirection += cpPoints
 							/ Math.pow(
@@ -348,7 +348,8 @@ public class PlayerAI {
 		// the other enemy has a mainframe and we do not
 
 		// calculate amount of damage we might take next turn
-		int amountOfDamageTaken = maximumPotentialDamage(i);
+		int amountOfDamageTaken = maximumPotentialDamage(friendlyUnits[i]
+				.getPosition());
 		int amountOfPoints = amountOfDamageTaken * 10;
 		if (friendlyUnits[i].getHealth() < amountOfDamageTaken) {
 			// unit will die, and enemy will receive additional 100 points
@@ -366,18 +367,18 @@ public class PlayerAI {
 	 * Determine the maximum potential damage that friendly unit will take next
 	 * move
 	 * 
-	 * @param i
-	 *            The index of the friendlyUnit we are interested in.
+	 * @param p
+	 *            point that we are interested in.
 	 * @return maximum damage our unit will take next turn
 	 */
-	private int maximumPotentialDamage(int i) {
+	private int maximumPotentialDamage(Point p) {
 		int amountOfDamageTaken = 0;
 		int damageMultiplier = 0;
 		for (int j = 0; j < enemyUnits.length; j++) {
 			// get unit's range
 			int range = enemyUnits[j].getCurrentWeapon().getRange();
-			if (world.canShooterShootTarget(enemyUnits[j].getPosition(),
-					friendlyUnits[i].getPosition(), range)) {
+			if (world.canShooterShootTarget(enemyUnits[j].getPosition(), p,
+					range)) {
 				amountOfDamageTaken += enemyUnits[j].getCurrentWeapon()
 						.getDamage();
 				damageMultiplier++;
@@ -404,7 +405,8 @@ public class PlayerAI {
 		PickupType currentPickupType = world.getPickupAtPosition(
 				friendlyUnits[i].getPosition()).getPickupType();
 
-		int damageWillTake = maximumPotentialDamage(i);
+		int damageWillTake = maximumPotentialDamage(friendlyUnits[i]
+				.getPosition());
 		// if pickup type is a health kit
 		if (currentPickupType == PickupType.REPAIR_KIT) {
 			if (damageWillTake >= 20) {
