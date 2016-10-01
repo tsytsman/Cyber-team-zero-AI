@@ -36,10 +36,20 @@ public class PlayerAI {
 
 	// Stores the move actions that have been determined for the current turn
 	// for each friendlyUnit
-	private Point[] moveActions = new Point[NUM_UNITS];
+	private Point[] currentMoveActions = new Point[NUM_UNITS];
+
+	// Stores the move actions that were determined for the previous turn
+	// for each friendlyUnit
+	private Point[] previousMoveActions = new Point[NUM_UNITS];
+
+	// Stores the results of the previous move attempts. The difference between
+	// this array and FriendlyUnit.getLastMoveResult() is that this array will
+	// not have MoveResult.NO_MOVE_ATTEMPTED if the previous action was not a
+	// move. Initially, it is filled with MoveResult.MOVE_COMPLETED
+	private MoveResult[] previousMoveResults = new MoveResult[NUM_UNITS];
 
 	public PlayerAI() {
-		// Any initialization code goes here.
+		Arrays.fill(previousMoveResults, MoveResult.MOVE_COMPLETED);
 	}
 
 	/**
@@ -139,22 +149,31 @@ public class PlayerAI {
 	}
 
 	private boolean moveValid(int i, Direction d) {
-		for (int j = 0; j < NUM_UNITS; j++) {
-			Point movePosition = d.movePoint(friendlyUnits[i].getPosition());
+		Point movePosition = d.movePoint(friendlyUnits[i].getPosition());
 
-			// Moves onto enemy tiles are not valid
-			for (EnemyUnit enemyUnit : enemyUnits) {
-				if (movePosition.equals(enemyUnit.getPosition())) {
-					return false;
-				}
+		// If our last move failed and it was to the same tile we are currently
+		// thinking about moving to
+		if (previousMoveResults[i] != MoveResult.MOVE_COMPLETED
+				&& movePosition.equals(previousMoveActions[i])) {
+			return false;
+		}
+
+		// Moves onto enemy tiles are not valid
+		for (EnemyUnit enemyUnit : enemyUnits) {
+			if (movePosition.equals(enemyUnit.getPosition())) {
+				return false;
 			}
+		}
 
-			if (moveActions[j] != null && moveActions[j].equals(movePosition)) {
+		// For each friendly unit
+		for (int j = 0; j < NUM_UNITS; j++) {
+			if (currentMoveActions[j] != null
+					&& currentMoveActions[j].equals(movePosition)) {
 				// If the current unit moving in the specified direction is the
 				// same position that a unit is already planning to move to,
 				// then the direction is invalid
 				return false;
-			} else if (moveActions[j] == null
+			} else if (currentMoveActions[j] == null
 					&& friendlyUnits[j].getPosition().equals(movePosition)) {
 				// If the current unit is trying to move onto a location
 				// occupied by a friendly unit that doesn't plan to move,
@@ -225,25 +244,28 @@ public class PlayerAI {
 						cpPoints += 50;
 					}
 					pointsForDirection += cpPoints
-							/ Math.pow(world.getPathLength(directionPoint,
-									cp.getPosition()) + 1, 1.5f);
+							/ Math.pow(
+									world.getPathLength(directionPoint,
+											cp.getPosition()) + 1, 1.5f);
 				}
 
 				for (Pickup p : pickups) {
-					// Only consider this pickup if the current direction decreases
+					// Only consider this pickup if the current direction
+					// decreases
 					// the path length by 1
 					if (getDifferenceInPathLengths(
 							friendlyUnits[i].getPosition(), directionPoint,
 							p.getPosition()) != 1) {
 						continue;
 					}
-					
+
 					// TODO: make a function like valueOfPickup(Pickup p)
 					int pickupPoints = valueOfPickup(i, p.getPickupType());
 
 					pointsForDirection += pickupPoints
-							/ Math.pow(world.getPathLength(directionPoint,
-									p.getPosition()) + 1, 1.5f);
+							/ Math.pow(
+									world.getPathLength(directionPoint,
+											p.getPosition()) + 1, 1.5f);
 				}
 
 				if (pointsForDirection > maxPoints) {
@@ -456,8 +478,10 @@ public class PlayerAI {
 						.getPosition()));
 		friendlyUnits[i].move(bestMoveDirections[i]);
 		// Store the point that the current unit is planning to move to
-		moveActions[i] = bestMoveDirections[i].movePoint(friendlyUnits[i]
-				.getPosition());
+		currentMoveActions[i] = bestMoveDirections[i]
+				.movePoint(friendlyUnits[i].getPosition());
+
+		previousMoveActions[i] = currentMoveActions[i];
 	}
 
 	private void performShoot(int i) {
@@ -482,6 +506,10 @@ public class PlayerAI {
 	 *            The index of the friendlyUnit we are interested in.
 	 */
 	private void doMove(int i) {
+		if (friendlyUnits[i].getLastMoveResult() != MoveResult.NO_MOVE_ATTEMPTED) {
+			previousMoveResults[i] = friendlyUnits[i].getLastMoveResult();
+		}
+
 		int movePoints = 0;
 		int shootPoints = 0;
 		int shieldPoints = 0;
@@ -564,7 +592,7 @@ public class PlayerAI {
 		this.enemyUnits = enemyUnits;
 		this.friendlyUnits = friendlyUnits;
 
-		Arrays.fill(moveActions, null);
+		Arrays.fill(currentMoveActions, null);
 
 		for (int i = 0; i < friendlyUnits.length; i++) {
 			doMove(i);
