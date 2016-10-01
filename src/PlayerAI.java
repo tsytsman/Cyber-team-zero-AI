@@ -24,6 +24,8 @@ public class PlayerAI {
 	private EnemyUnit[] enemyUnits;
 	// An array of all 4 units on your team. Their order won't change.
 	private FriendlyUnit[] friendlyUnits;
+	// An array of enemy units to shoot
+	private EnemyUnit[] enemiesToShoot = new EnemyUnit[4];
 
 	// Stores the best direction for each unit to travel in
 	private Direction[] moveDirections = new Direction[4];
@@ -205,7 +207,7 @@ public class PlayerAI {
 		// for each enemy, check what happens if all friendly units try to shot
 		// him
 		// TODO: store best enemy to shoot somewhere
-		int maxPoints = 0;
+		int maxPoints = Integer.MIN_VALUE;
 		for (int j = 0; j < enemyUnits.length; j++) {
 			int totalDamage = 0;
 			int damageMultiplier = 0;
@@ -231,6 +233,7 @@ public class PlayerAI {
 			}
 			if (points > maxPoints) {
 				maxPoints = points;
+				enemiesToShoot[i] = enemyUnits[j];
 			}
 
 		}
@@ -337,7 +340,7 @@ public class PlayerAI {
 	}
 
 	private void performShoot(int i) {
-		// TODO: perform the shot that we thought was best
+		friendlyUnits[i].shootAt(enemiesToShoot[i]);
 	}
 
 	private void performShield(int i) {
