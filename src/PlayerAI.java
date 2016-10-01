@@ -6,6 +6,7 @@ import com.orbischallenge.ctz.objects.enums.ActivateShieldResult;
 import com.orbischallenge.ctz.objects.enums.ShotResult;
 import com.orbischallenge.ctz.objects.enums.Direction;
 import com.orbischallenge.ctz.objects.enums.PickupType;
+import com.orbischallenge.ctz.objects.enums.PickupResult;
 import com.orbischallenge.ctz.objects.enums.MoveResult;
 
 public class PlayerAI {
@@ -77,7 +78,11 @@ public class PlayerAI {
 	 *         otherwise.
 	 */
 	private boolean canPickup(int i) {
-		return true;
+		if (friendlyUnits[i].checkPickupResult() == PickupResult.PICK_UP_VALID){
+			return true;
+		}
+		return false;
+		
 	}
 
 	/**
