@@ -120,7 +120,27 @@ public class PlayerAI {
 	 * @return An estimate of the number of points for shielding.
 	 */
 	private int pointsForShield(int i) {
-		return 0;
+		// calculate amount of damage we might take next turn
+		int amountOfDamageTaken = 0;
+		int damageMultiplier = 0;
+		for (int j = 0; j < enemyUnits.length; j++) {
+			// get unit's range
+			int range = enemyUnits[j].getCurrentWeapon().getRange();
+			if (world.canShooterShootTarget(enemyUnits[j].getPosition(),
+					friendlyUnits[i].getPosition(), range)) {
+				amountOfDamageTaken += enemyUnits[j].getCurrentWeapon()
+						.getDamage();
+				damageMultiplier++;
+			}
+		}
+		int amountOfDamageTakenWithMultiplier = amountOfDamageTaken
+				* damageMultiplier;
+		int amountOfPoints = amountOfDamageTakenWithMultiplier * 10;
+		if (friendlyUnits[i].getHealth() < amountOfDamageTakenWithMultiplier) {
+			// unit will die, and enemy will receive additional 100 points
+			amountOfPoints += 100;
+		}
+		return amountOfPoints;
 	}
 
 	/**
