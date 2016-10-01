@@ -1,6 +1,8 @@
 import com.orbischallenge.ctz.Constants;
+import com.orbischallenge.ctz.objects.ControlPoint;
 import com.orbischallenge.ctz.objects.EnemyUnit;
 import com.orbischallenge.ctz.objects.FriendlyUnit;
+import com.orbischallenge.ctz.objects.Pickup;
 import com.orbischallenge.ctz.objects.World;
 import com.orbischallenge.ctz.objects.ControlPoint;
 import com.orbischallenge.ctz.objects.enums.ActivateShieldResult;
@@ -10,6 +12,7 @@ import com.orbischallenge.ctz.objects.enums.PickupType;
 import com.orbischallenge.ctz.objects.enums.PickupResult;
 import com.orbischallenge.ctz.objects.enums.MoveResult;
 import com.orbischallenge.ctz.objects.enums.Team;
+import com.orbischallenge.game.engine.Point;
 
 public class PlayerAI {
 
@@ -19,6 +22,9 @@ public class PlayerAI {
 	private EnemyUnit[] enemyUnits;
 	// An array of all 4 units on your team. Their order won't change.
 	private FriendlyUnit[] friendlyUnits;
+
+	// Stores the best direction for each unit to travel in
+	private Direction[] moveDirections = new Direction[4];
 
 	public PlayerAI() {
 		// Any initialization code goes here.
@@ -133,7 +139,55 @@ public class PlayerAI {
 	 *         can take.
 	 */
 	private int pointsForMove(int i) {
-		return 0;
+		int maxPoints = Integer.MIN_VALUE;
+		Direction bestDirection = null;
+
+		// For each direction
+		for (Direction d : Direction.values()) {
+			// If we can actually travel in that direction
+			if (friendlyUnits[i].checkMove(d) == MoveResult.MOVE_VALID) {
+				int pointsForDirection = 0;
+				Point directionPoint = d.movePoint(friendlyUnits[i]
+						.getPosition());
+
+				ControlPoint[] controlPoints = world.getControlPoints();
+				Pickup[] pickups = world.getPickups();
+
+				for (ControlPoint cp : controlPoints) {
+					int cpPoints = 200;
+					if (cp.getControllingTeam() == friendlyUnits[i].getTeam()) {
+						// Prevent movement towards our own cp
+						continue;
+					} else if (cp.getControllingTeam() == Team
+							.opposite(friendlyUnits[i].getTeam())) {
+						// 50 extra points for neutralizing an opposing control
+						// point
+						cpPoints += 50;
+					}
+					pointsForDirection += cpPoints
+							/ (world.getPathLength(directionPoint,
+									cp.getPosition()) + 1);
+				}
+
+				for (Pickup p : pickups) {
+					// TODO: make a function like valueOfPickup(Pickup p)
+					int pickupPoints = 50;
+
+					pointsForDirection += pickupPoints
+							/ (world.getPathLength(directionPoint,
+									p.getPosition()) + 1);
+				}
+
+				if (pointsForDirection > maxPoints) {
+					maxPoints = pointsForDirection;
+					bestDirection = d;
+				}
+			}
+		}
+
+		moveDirections[i] = bestDirection;
+
+		return maxPoints;
 	}
 
 	/**
@@ -201,6 +255,10 @@ public class PlayerAI {
 	 * Determine the maximum number of points we can get if we were to perform a
 	 * pickup action for a specific friendlyUnit.
 	 * 
+	 * TODO: factor out code to use a function like valueOfPickup(Pickup pickup)
+	 * which could be used in the heuristic for picking up immediately and for
+	 * moving to a pickup
+	 * 
 	 * @param i
 	 *            The index of the friendlyUnit we are interested in.
 	 * @return An estimate of the number of points for picking up.
@@ -241,7 +299,7 @@ public class PlayerAI {
 	}
 
 	private void performMove(int i) {
-		// TODO: perform the movement that we thought was best
+		friendlyUnits[i].move(moveDirections[i]);
 	}
 
 	private void performShoot(int i) {
@@ -294,6 +352,10 @@ public class PlayerAI {
 			maxPoints = Math.max(maxPoints, pickupPoints);
 		}
 
+		System.out.println("  Unit " + i + ": move=" + movePoints + " shoot="
+				+ shootPoints + " shield=" + shieldPoints + " pickup="
+				+ pickupPoints);
+
 		// TODO: make this better, right now the priority is fixed - shield then
 		// shoot then move then pickup
 		if (canShield && shieldPoints == maxPoints) {
@@ -311,6 +373,8 @@ public class PlayerAI {
 		}
 	}
 
+	int moveNumber = 0;
+
 	/**
 	 * This method will get called every turn.
 	 * 
@@ -325,6 +389,10 @@ public class PlayerAI {
 	 */
 	public void doMove(World world, EnemyUnit[] enemyUnits,
 			FriendlyUnit[] friendlyUnits) {
+
+		System.out.println("Team: " + friendlyUnits[0].getTeam());
+		System.out.println("Move number: " + moveNumber++);
+
 		this.world = world;
 		this.enemyUnits = enemyUnits;
 		this.friendlyUnits = friendlyUnits;
