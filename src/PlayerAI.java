@@ -52,7 +52,7 @@ public class PlayerAI {
 		// Check each direction to determine if the unit can move in that
 		// direction
 		for (Direction d : Direction.values()) {
-			if (friendlyUnits[i].checkMove(d) == MoveResult.MOVE_VALID) {
+			if (moveValid(i, d)) {
 				return true;
 			}
 		}
@@ -140,6 +140,13 @@ public class PlayerAI {
 	private boolean moveValid(int i, Direction d) {
 		for (int j = 0; j < NUM_UNITS; j++) {
 			Point movePosition = d.movePoint(friendlyUnits[i].getPosition());
+
+			// Moves onto enemy tiles are not valid
+			for (EnemyUnit enemyUnit : enemyUnits) {
+				if (movePosition.equals(enemyUnit.getPosition())) {
+					return false;
+				}
+			}
 
 			if (moveActions[j] != null && moveActions[j].equals(movePosition)) {
 				// If the current unit moving in the specified direction is the
@@ -233,6 +240,9 @@ public class PlayerAI {
 		// TODO: store best enemy to shoot somewhere
 		int maxPoints = Integer.MIN_VALUE;
 		for (int j = 0; j < enemyUnits.length; j++) {
+			if (friendlyUnits[i].checkShotAgainstEnemy(enemyUnits[j]) != ShotResult.CAN_HIT_ENEMY) {
+				continue;
+			}
 			int totalDamage = 0;
 			int damageMultiplier = 0;
 			for (int k = 0; k < friendlyUnits.length; k++) {
@@ -245,7 +255,7 @@ public class PlayerAI {
 			int damage = totalDamage * damageMultiplier;
 			int points = damage * 10;
 			// if we kill the enemy, add 100 points
-			if (enemyUnits[j].getHealth() < damage) {
+			if (enemyUnits[j].getHealth() <= damage) {
 				points += 100;
 			}
 			if (numberOfMainframesControlled(enemyUnits[j].getTeam()) == 0
@@ -259,7 +269,6 @@ public class PlayerAI {
 				maxPoints = points;
 				enemiesToShoot[i] = enemyUnits[j];
 			}
-
 		}
 		return maxPoints;
 	}
@@ -360,6 +369,9 @@ public class PlayerAI {
 	}
 
 	private void performMove(int i) {
+		System.out.println("      Moving to "
+				+ bestMoveDirections[i].movePoint(friendlyUnits[i]
+						.getPosition()));
 		friendlyUnits[i].move(bestMoveDirections[i]);
 		// Store the point that the current unit is planning to move to
 		moveActions[i] = bestMoveDirections[i].movePoint(friendlyUnits[i]
@@ -367,6 +379,8 @@ public class PlayerAI {
 	}
 
 	private void performShoot(int i) {
+		System.out.println("      Shooting at "
+				+ enemiesToShoot[i].getASCIIIcon());
 		friendlyUnits[i].shootAt(enemiesToShoot[i]);
 	}
 
@@ -416,26 +430,30 @@ public class PlayerAI {
 			maxPoints = Math.max(maxPoints, pickupPoints);
 		}
 
-		System.out.println("  Unit " + i + ": move=" + movePoints + " shoot="
-				+ shootPoints + " shield=" + shieldPoints + " pickup="
-				+ pickupPoints);
+		System.out.println("  Unit " + friendlyUnits[i].getASCIIIcon()
+				+ ": move=" + movePoints + " shoot=" + shootPoints + " shield="
+				+ shieldPoints + " pickup=" + pickupPoints);
 
 		// TODO: make this better, right now the priority is fixed - shield then
 		// shoot then move then pickup
 		if (canShield && shieldPoints == maxPoints) {
+			System.out.println("    Performing shield");
 			// If we can shield, and doing so would maximize our points
 			performShield(i);
 		} else if (canShoot && shootPoints == maxPoints) {
+			System.out.println("    Performing shoot");
 			// If we can shoot, and doing so would maximize our points
 			performShoot(i);
 		} else if (canMove && movePoints == maxPoints) {
+			System.out.println("    Performing move");
 			// If we can move, and doing so would maximize our points
 			performMove(i);
 		} else if (canPickup && pickupPoints == maxPoints) {
+			System.out.println("    Performing pickup");
 			// If we can pickup, and doing so would maximize our points
 			performPickup(i);
 		} else {
-			System.out.println("  Standing by...");
+			System.out.println("    Standing by...");
 			friendlyUnits[i].standby();
 		}
 	}
