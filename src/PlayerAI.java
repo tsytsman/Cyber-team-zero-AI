@@ -16,6 +16,8 @@ import com.orbischallenge.game.engine.Point;
 
 public class PlayerAI {
 
+	private static final float MAINFRAME_DAMAGE_MULTIPLIER = 1.5f;
+
 	// The latest state of the world.
 	private World world;
 	// An array of all 4 units on the enemy team. Their order won't change.
@@ -200,7 +202,39 @@ public class PlayerAI {
 	 *         make.
 	 */
 	private int pointsForShoot(int i) {
-		return 0;
+		// for each enemy, check what happens if all friendly units try to shot
+		// him
+		// TODO: store best enemy to shoot somewhere
+		int maxPoints = 0;
+		for (int j = 0; j < enemyUnits.length; j++) {
+			int totalDamage = 0;
+			int damageMultiplier = 0;
+			for (int k = 0; k < friendlyUnits.length; k++) {
+				if (friendlyUnits[k].checkShotAgainstEnemy(enemyUnits[j]) == ShotResult.CAN_HIT_ENEMY) {
+					totalDamage += friendlyUnits[k].getCurrentWeapon()
+							.getDamage();
+					damageMultiplier++;
+				}
+			}
+			int damage = totalDamage * damageMultiplier;
+			int points = damage * 10;
+			// if we kill the enemy, add 100 points
+			if (enemyUnits[j].getHealth() < damage) {
+				points += 100;
+			}
+			if (numberOfMainframesControlled(enemyUnits[j].getTeam()) == 0
+					&& numberOfMainframesControlled(friendlyUnits[i].getTeam()) > 0) {
+				// TODO: figure out a multiplier in case enemies have no
+				// mainframes,
+				// but we have mainframes
+				points = (int) (points * MAINFRAME_DAMAGE_MULTIPLIER);
+			}
+			if (points > maxPoints) {
+				maxPoints = points;
+			}
+
+		}
+		return maxPoints;
 	}
 
 	/**
