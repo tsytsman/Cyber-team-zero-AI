@@ -149,6 +149,19 @@ public class PlayerAI {
 		return counter;
 	}
 
+	/**
+	 * Determines if movement for a unit in a direction is valid. This considers
+	 * whether the previous move attempt succeeded (only if it was to the same
+	 * tile we are trying to move to now), whether there is an enemy there, and
+	 * guarantees that we won't move two units to the same location or move a
+	 * unit to a location that another unit won't move out of this turn.
+	 * 
+	 * @param i
+	 *            The index of the friendlyUnit we are interested in.
+	 * @param d
+	 *            The direction we are thinking of moving that unit in.
+	 * @return Whether or not we are allowed to move the unit in that direction.
+	 */
 	private boolean moveValid(int i, Direction d) {
 		Point movePosition = d.movePoint(friendlyUnits[i].getPosition());
 
@@ -244,9 +257,12 @@ public class PlayerAI {
 						// point
 						cpPoints += 50;
 					}
-					if (cp.isMainframe())
+					if (cp.isMainframe()) {
 						// add 400 extra points for mainframe
 						cpPoints += 400;
+					}
+					// Make the points for this cp drop off with distance
+					// according to x^1.5
 					pointsForDirection += cpPoints
 							/ Math.pow(
 									world.getPathLength(directionPoint,
@@ -270,6 +286,8 @@ public class PlayerAI {
 						if (currentPickupPoints >= pickupPoints)
 							continue;
 					}
+					// Make the points for this pickup drop off with distance
+					// according to x^1.5
 					pointsForDirection += pickupPoints
 							/ Math.pow(
 									world.getPathLength(directionPoint,
@@ -302,11 +320,13 @@ public class PlayerAI {
 		// him
 		int maxPoints = Integer.MIN_VALUE;
 		for (int j = 0; j < enemyUnits.length; j++) {
+			// If shooting the current enemy isn't valid, skip it
 			if (friendlyUnits[i].checkShotAgainstEnemy(enemyUnits[j]) != ShotResult.CAN_HIT_ENEMY) {
 				continue;
 			}
 			int totalDamage = 0;
 			int damageMultiplier = 0;
+			// Calculate the total amount of damage we can do to this enemy with all units
 			for (int k = 0; k < friendlyUnits.length; k++) {
 				if (friendlyUnits[k].checkShotAgainstEnemy(enemyUnits[j]) == ShotResult.CAN_HIT_ENEMY) {
 					totalDamage += friendlyUnits[k].getCurrentWeapon()
@@ -320,6 +340,7 @@ public class PlayerAI {
 			if (enemyUnits[j].getHealth() <= damage) {
 				points += 100;
 			}
+			// If the enemy doesn't have a mainframe and we do, we want to shoot them more
 			if (numberOfMainframesControlled(enemyUnits[j].getTeam()) == 0
 					&& numberOfMainframesControlled(friendlyUnits[i].getTeam()) > 0) {
 				// TODO: figure out a multiplier in case enemies have no
@@ -327,6 +348,7 @@ public class PlayerAI {
 				// but we have mainframes
 				points = (int) (points * MAINFRAME_DAMAGE_MULTIPLIER);
 			}
+			// Choose the enemy to shoot that maximizes our points
 			if (points > maxPoints) {
 				maxPoints = points;
 				enemiesToShoot[i] = enemyUnits[j];
