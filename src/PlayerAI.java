@@ -82,7 +82,6 @@ public class PlayerAI {
 			return true;
 		}
 		return false;
-
 	}
 
 	/**
@@ -122,6 +121,7 @@ public class PlayerAI {
 	private int pointsForShield(int i) {
 		// TODO: later on we could implement something to let us live longer if
 		// the other enemy has a mainframe and we do not
+
 		// calculate amount of damage we might take next turn
 		int amountOfDamageTaken = 0;
 		int damageMultiplier = 0;
@@ -157,6 +157,22 @@ public class PlayerAI {
 		return 0;
 	}
 
+	private void performMove(int i) {
+		// TODO: perform the movement that we thought was best
+	}
+
+	private void performShoot(int i) {
+		// TODO: perform the shot that we thought was best
+	}
+
+	private void performShield(int i) {
+		friendlyUnits[i].activateShield();
+	}
+
+	private void performPickup(int i) {
+		friendlyUnits[i].pickupItemAtPosition();
+	}
+
 	/**
 	 * Determine the action that should be taken for the ith friendlyUnit, and
 	 * take that action.
@@ -175,6 +191,8 @@ public class PlayerAI {
 		boolean canShield = canShield(i);
 		boolean canPickup = canPickup(i);
 
+		// Use our heuristic functions to estimate the maximum number of points
+		// we can get this turn
 		int maxPoints = Integer.MIN_VALUE;
 		if (canMove) {
 			movePoints = pointsForMove(i);
@@ -196,21 +214,17 @@ public class PlayerAI {
 		// TODO: make this better, right now the priority is fixed - shield then
 		// shoot then move then pickup
 		if (canShield && shieldPoints == maxPoints) {
-			// If we can shield, and doing so would maximize our points, then do
-			// so
-
+			// If we can shield, and doing so would maximize our points
+			performShield(i);
 		} else if (canShoot && shootPoints == maxPoints) {
-			// If we can shoot, and doing so would maximize our points, then do
-			// so
-
+			// If we can shoot, and doing so would maximize our points
+			performShoot(i);
 		} else if (canMove && movePoints == maxPoints) {
-			// If we can move, and doing so would maximize our points, then do
-			// so
-
+			// If we can move, and doing so would maximize our points
+			performMove(i);
 		} else if (canPickup && pickupPoints == maxPoints) {
-			// If we can pickup, and doing so would maximize our points, then do
-			// so
-
+			// If we can pickup, and doing so would maximize our points
+			performPickup(i);
 		}
 	}
 
