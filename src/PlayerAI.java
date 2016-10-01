@@ -120,6 +120,8 @@ public class PlayerAI {
 	 * @return An estimate of the number of points for shielding.
 	 */
 	private int pointsForShield(int i) {
+		// TODO: later on we could implement something to let us live longer if
+		// the other enemy has a mainframe and we do not
 		// calculate amount of damage we might take next turn
 		int amountOfDamageTaken = 0;
 		int damageMultiplier = 0;
@@ -163,10 +165,10 @@ public class PlayerAI {
 	 *            The index of the friendlyUnit we are interested in.
 	 */
 	private void doMove(int i) {
-		int movePoints = pointsForMove(i);
-		int shootPoints = pointsForShoot(i);
-		int shieldPoints = pointsForShield(i);
-		int pickupPoints = pointsForPickup(i);
+		int movePoints = 0;
+		int shootPoints = 0;
+		int shieldPoints = 0;
+		int pickupPoints = 0;
 
 		boolean canMove = canMove(i);
 		boolean canShoot = canShoot(i);
@@ -174,14 +176,22 @@ public class PlayerAI {
 		boolean canPickup = canPickup(i);
 
 		int maxPoints = Integer.MIN_VALUE;
-		if (canMove)
+		if (canMove) {
+			movePoints = pointsForMove(i);
 			maxPoints = Math.max(maxPoints, movePoints);
-		if (canShoot)
+		}
+		if (canShoot) {
+			shootPoints = pointsForShoot(i);
 			maxPoints = Math.max(maxPoints, shootPoints);
-		if (canShield)
+		}
+		if (canShield) {
+			shieldPoints = pointsForShield(i);
 			maxPoints = Math.max(maxPoints, shieldPoints);
-		if (canPickup)
+		}
+		if (canPickup) {
+			pickupPoints = pointsForPickup(i);
 			maxPoints = Math.max(maxPoints, pickupPoints);
+		}
 
 		// TODO: make this better, right now the priority is fixed - shield then
 		// shoot then move then pickup
