@@ -78,11 +78,11 @@ public class PlayerAI {
 	 *         otherwise.
 	 */
 	private boolean canPickup(int i) {
-		if (friendlyUnits[i].checkPickupResult() == PickupResult.PICK_UP_VALID){
+		if (friendlyUnits[i].checkPickupResult() == PickupResult.PICK_UP_VALID) {
 			return true;
 		}
 		return false;
-		
+
 	}
 
 	/**
@@ -136,6 +136,8 @@ public class PlayerAI {
 	}
 
 	/**
+	 * Determine the action that should be taken for the ith friendlyUnit, and
+	 * take that action.
 	 * 
 	 * @param i
 	 *            The index of the friendlyUnit we are interested in.
@@ -146,9 +148,38 @@ public class PlayerAI {
 		int shieldPoints = pointsForShield(i);
 		int pickupPoints = pointsForPickup(i);
 
-		// If we can and should shield, do so
-		if (canShield(i) && shieldPoints >= movePoints
-				&& shieldPoints >= shootPoints && shieldPoints >= pickupPoints) {
+		boolean canMove = canMove(i);
+		boolean canShoot = canShoot(i);
+		boolean canShield = canShield(i);
+		boolean canPickup = canPickup(i);
+
+		int maxPoints = Integer.MIN_VALUE;
+		if (canMove)
+			maxPoints = Math.max(maxPoints, movePoints);
+		if (canShoot)
+			maxPoints = Math.max(maxPoints, shootPoints);
+		if (canShield)
+			maxPoints = Math.max(maxPoints, shieldPoints);
+		if (canPickup)
+			maxPoints = Math.max(maxPoints, pickupPoints);
+
+		// TODO: make this better, right now the priority is fixed - shield then
+		// shoot then move then pickup
+		if (canShield && shieldPoints == maxPoints) {
+			// If we can shield, and doing so would maximize our points, then do
+			// so
+
+		} else if (canShoot && shootPoints == maxPoints) {
+			// If we can shoot, and doing so would maximize our points, then do
+			// so
+
+		} else if (canMove && movePoints == maxPoints) {
+			// If we can move, and doing so would maximize our points, then do
+			// so
+
+		} else if (canPickup && pickupPoints == maxPoints) {
+			// If we can pickup, and doing so would maximize our points, then do
+			// so
 
 		}
 	}
