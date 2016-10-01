@@ -47,8 +47,7 @@ public class PlayerAI {
 	 * @return True if the friendlyUnit can make a shoot action, false
 	 *         otherwise.
 	 */
-	private boolean canShoot(World world, EnemyUnit[] enemyUnits,
-			FriendlyUnit[] friendlyUnits, int i) {
+	private boolean canShoot(int i) {
 		for (int j = 0; j < enemyUnits.length; j++) {
 			if (friendlyUnits[i].checkShotAgainstEnemy(enemyUnits[j]) == ShotResult.CAN_HIT_ENEMY) {
 				return true;
