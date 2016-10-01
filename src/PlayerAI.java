@@ -2,6 +2,10 @@ import com.orbischallenge.ctz.Constants;
 import com.orbischallenge.ctz.objects.EnemyUnit;
 import com.orbischallenge.ctz.objects.FriendlyUnit;
 import com.orbischallenge.ctz.objects.World;
+import com.orbischallenge.ctz.objects.enums.ActivateShieldResult;
+import com.orbischallenge.ctz.objects.enums.ShotResult;
+import com.orbischallenge.ctz.objects.enums.Direction;
+import com.orbischallenge.ctz.objects.enums.PickupType;
 
 
 public class PlayerAI {
@@ -33,8 +37,13 @@ public class PlayerAI {
 	 * @param i The index of the friendlyUnit we are interested in.
      * @return True if the friendlyUnit can make a shoot action, false otherwise.
      */
-    private boolean canShoot(int i) {
-    	return true;
+    private boolean canShoot(World world, EnemyUnit[] enemyUnits, FriendlyUnit[] friendlyUnits, int i) {
+    	for (int j = 0; j < enemyUnits.length; j++){
+    		if (friendlyUnits[i].checkShotAgainstEnemy(enemyUnits[j]) == ShotResult.CAN_HIT_ENEMY){
+    			return true;
+    		}
+    	}
+    	return false;
     }
     
     /**

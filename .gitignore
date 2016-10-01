@@ -2,3 +2,4 @@ bin
 Cyber Team Zero
 .classpath
 .project
+*.class
