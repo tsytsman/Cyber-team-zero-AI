@@ -166,6 +166,23 @@ public class PlayerAI {
 	}
 
 	/**
+	 * Returns the difference in path lengths between a and target and b and
+	 * target.
+	 * 
+	 * @param a
+	 *            The starting Point for the first path to target.
+	 * @param b
+	 *            The starting Point for the second path to target.
+	 * @param target
+	 *            The target Point.
+	 * @return (the path length of a -> target) - (the path length of b ->
+	 *         target)
+	 */
+	private int getDifferenceInPathLengths(Point a, Point b, Point target) {
+		return world.getPathLength(a, target) - world.getPathLength(b, target);
+	}
+
+	/**
 	 * Determine the maximum number of points we can get if we were to perform a
 	 * move action for a specific friendlyUnit.
 	 * 
@@ -190,6 +207,13 @@ public class PlayerAI {
 				Pickup[] pickups = world.getPickups();
 
 				for (ControlPoint cp : controlPoints) {
+					// Only consider this cp if the current direction decreases
+					// the path length by 1
+					if (getDifferenceInPathLengths(
+							friendlyUnits[i].getPosition(), directionPoint,
+							cp.getPosition()) != 1) {
+						continue;
+					}
 					int cpPoints = 200;
 					if (cp.getControllingTeam() == friendlyUnits[i].getTeam()) {
 						// Prevent movement towards our own cp
@@ -201,17 +225,25 @@ public class PlayerAI {
 						cpPoints += 50;
 					}
 					pointsForDirection += cpPoints
-							/ (world.getPathLength(directionPoint,
-									cp.getPosition()) + 1);
+							/ Math.pow(world.getPathLength(directionPoint,
+									cp.getPosition()) + 1, 1.5f);
 				}
 
 				for (Pickup p : pickups) {
+					// Only consider this pickup if the current direction decreases
+					// the path length by 1
+					if (getDifferenceInPathLengths(
+							friendlyUnits[i].getPosition(), directionPoint,
+							p.getPosition()) != 1) {
+						continue;
+					}
+					
 					// TODO: make a function like valueOfPickup(Pickup p)
 					int pickupPoints = valueOfPickup(i, p.getPickupType());
 
 					pointsForDirection += pickupPoints
-							/ (world.getPathLength(directionPoint,
-									p.getPosition()) + 1);
+							/ Math.pow(world.getPathLength(directionPoint,
+									p.getPosition()) + 1, 1.5f);
 				}
 
 				if (pointsForDirection > maxPoints) {
@@ -364,7 +396,7 @@ public class PlayerAI {
 				return valueOfPickup(i, currentPickupType);
 			}
 		}
-		//if it is a gun:
+		// if it is a gun:
 		return valueOfPickup(i, currentPickupType);
 	}
 
@@ -378,38 +410,39 @@ public class PlayerAI {
 		case SHIELD:
 			value = 100;
 			break;
-		case WEAPON_LASER_RIFLE :
-			if (currentWeapon == WeaponType.LASER_RIFLE){
+		case WEAPON_LASER_RIFLE:
+			if (currentWeapon == WeaponType.LASER_RIFLE) {
 				value = 50;
 			} else {
 				value = 150;
 			}
 			break;
-		case WEAPON_MINI_BLASTER :
-			if (currentWeapon == WeaponType.MINI_BLASTER){
-				//if we have this weapon, we will get 50 points for picking it up
+		case WEAPON_MINI_BLASTER:
+			if (currentWeapon == WeaponType.MINI_BLASTER) {
+				// if we have this weapon, we will get 50 points for picking it
+				// up
 				value = 50;
 			} else {
-				//else, we have something better
+				// else, we have something better
 				value = 0;
 			}
 			break;
-		case WEAPON_RAIL_GUN :
-			if (currentWeapon == WeaponType.RAIL_GUN){
+		case WEAPON_RAIL_GUN:
+			if (currentWeapon == WeaponType.RAIL_GUN) {
 				value = 50;
 			} else {
-				//sniper rifle is the shit
+				// sniper rifle is the shit
 				value = 200;
 			}
 			break;
-		case WEAPON_SCATTER_GUN :
-			if (currentWeapon == WeaponType.SCATTER_GUN){
+		case WEAPON_SCATTER_GUN:
+			if (currentWeapon == WeaponType.SCATTER_GUN) {
 				value = 50;
 			} else {
 				value = 100;
 			}
 			break;
-		default :
+		default:
 			value = 0;
 			break;
 
