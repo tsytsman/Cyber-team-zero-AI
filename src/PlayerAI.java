@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 import com.orbischallenge.ctz.Constants;
 import com.orbischallenge.ctz.objects.ControlPoint;
 import com.orbischallenge.ctz.objects.EnemyUnit;
@@ -16,6 +18,7 @@ import com.orbischallenge.game.engine.Point;
 
 public class PlayerAI {
 
+	private static final int NUM_UNITS = 4;
 	private static final float MAINFRAME_DAMAGE_MULTIPLIER = 1.5f;
 
 	// The latest state of the world.
@@ -27,8 +30,12 @@ public class PlayerAI {
 	// An array of enemy units to shoot
 	private EnemyUnit[] enemiesToShoot = new EnemyUnit[4];
 
-	// Stores the best direction for each unit to travel in
-	private Direction[] moveDirections = new Direction[4];
+	// Stores the best direction for each friendlyUnit to travel in
+	private Direction[] bestMoveDirections = new Direction[NUM_UNITS];
+
+	// Stores the move actions that have been determined for the current turn
+	// for each friendlyUnit
+	private Point[] moveActions = new Point[NUM_UNITS];
 
 	public PlayerAI() {
 		// Any initialization code goes here.
@@ -90,10 +97,7 @@ public class PlayerAI {
 	 *         otherwise.
 	 */
 	private boolean canPickup(int i) {
-		if (friendlyUnits[i].checkPickupResult() == PickupResult.PICK_UP_VALID) {
-			return true;
-		}
-		return false;
+		return friendlyUnits[i].checkPickupResult() == PickupResult.PICK_UP_VALID;
 	}
 
 	/**
@@ -133,6 +137,26 @@ public class PlayerAI {
 		return counter;
 	}
 
+	private boolean moveValid(int i, Direction d) {
+		for (int j = 0; j < NUM_UNITS; j++) {
+			Point movePosition = d.movePoint(friendlyUnits[i].getPosition());
+
+			if (moveActions[j] != null && moveActions[j].equals(movePosition)) {
+				// If the current unit moving in the specified direction is the
+				// same position that a unit is already planning to move to,
+				// then the direction is invalid
+				return false;
+			} else if (moveActions[j] == null
+					&& friendlyUnits[j].getPosition().equals(movePosition)) {
+				// If the current unit is trying to move onto a location
+				// occupied by a friendly unit that doesn't plan to move,
+				// then the direction is invalid
+				return false;
+			}
+		}
+		return friendlyUnits[i].checkMove(d) == MoveResult.MOVE_VALID;
+	}
+
 	/**
 	 * Determine the maximum number of points we can get if we were to perform a
 	 * move action for a specific friendlyUnit.
@@ -149,7 +173,7 @@ public class PlayerAI {
 		// For each direction
 		for (Direction d : Direction.values()) {
 			// If we can actually travel in that direction
-			if (friendlyUnits[i].checkMove(d) == MoveResult.MOVE_VALID) {
+			if (moveValid(i, d)) {
 				int pointsForDirection = 0;
 				Point directionPoint = d.movePoint(friendlyUnits[i]
 						.getPosition());
@@ -189,7 +213,7 @@ public class PlayerAI {
 			}
 		}
 
-		moveDirections[i] = bestDirection;
+		bestMoveDirections[i] = bestDirection;
 
 		return maxPoints;
 	}
@@ -336,7 +360,10 @@ public class PlayerAI {
 	}
 
 	private void performMove(int i) {
-		friendlyUnits[i].move(moveDirections[i]);
+		friendlyUnits[i].move(bestMoveDirections[i]);
+		// Store the point that the current unit is planning to move to
+		moveActions[i] = bestMoveDirections[i].movePoint(friendlyUnits[i]
+				.getPosition());
 	}
 
 	private void performShoot(int i) {
@@ -407,6 +434,9 @@ public class PlayerAI {
 		} else if (canPickup && pickupPoints == maxPoints) {
 			// If we can pickup, and doing so would maximize our points
 			performPickup(i);
+		} else {
+			System.out.println("  Standing by...");
+			friendlyUnits[i].standby();
 		}
 	}
 
@@ -433,6 +463,8 @@ public class PlayerAI {
 		this.world = world;
 		this.enemyUnits = enemyUnits;
 		this.friendlyUnits = friendlyUnits;
+
+		Arrays.fill(moveActions, null);
 
 		for (int i = 0; i < friendlyUnits.length; i++) {
 			doMove(i);
