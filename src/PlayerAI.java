@@ -14,6 +14,7 @@ import com.orbischallenge.ctz.objects.enums.PickupType;
 import com.orbischallenge.ctz.objects.enums.PickupResult;
 import com.orbischallenge.ctz.objects.enums.MoveResult;
 import com.orbischallenge.ctz.objects.enums.Team;
+import com.orbischallenge.ctz.objects.enums.WeaponType;
 import com.orbischallenge.game.engine.Point;
 
 public class PlayerAI {
@@ -206,7 +207,7 @@ public class PlayerAI {
 
 				for (Pickup p : pickups) {
 					// TODO: make a function like valueOfPickup(Pickup p)
-					int pickupPoints = 50;
+					int pickupPoints = valueOfPickup(i, p.getPickupType());
 
 					pointsForDirection += pickupPoints
 							/ (world.getPathLength(directionPoint,
@@ -357,15 +358,63 @@ public class PlayerAI {
 				if (numberOfMainframesControlled(friendlyUnits[i].getTeam()) == 0) {
 					return 0;
 				} else {
-					// TODO: figure out a better value of shield
-					return 100;
+					return valueOfPickup(i, currentPickupType);
 				}
 			} else {
-				// TODO: figure out a better value of shield
-				return 100;
+				return valueOfPickup(i, currentPickupType);
 			}
 		}
-		return 0;
+		//if it is a gun:
+		return valueOfPickup(i, currentPickupType);
+	}
+
+	private int valueOfPickup(int i, PickupType p) {
+		int value = 0;
+		WeaponType currentWeapon = friendlyUnits[i].getCurrentWeapon();
+		switch (p) {
+		case REPAIR_KIT:
+			value = 250;
+			break;
+		case SHIELD:
+			value = 100;
+			break;
+		case WEAPON_LASER_RIFLE :
+			if (currentWeapon == WeaponType.LASER_RIFLE){
+				value = 50;
+			} else {
+				value = 150;
+			}
+			break;
+		case WEAPON_MINI_BLASTER :
+			if (currentWeapon == WeaponType.MINI_BLASTER){
+				//if we have this weapon, we will get 50 points for picking it up
+				value = 50;
+			} else {
+				//else, we have something better
+				value = 0;
+			}
+			break;
+		case WEAPON_RAIL_GUN :
+			if (currentWeapon == WeaponType.RAIL_GUN){
+				value = 50;
+			} else {
+				//sniper rifle is the shit
+				value = 200;
+			}
+			break;
+		case WEAPON_SCATTER_GUN :
+			if (currentWeapon == WeaponType.SCATTER_GUN){
+				value = 50;
+			} else {
+				value = 100;
+			}
+			break;
+		default :
+			value = 0;
+			break;
+
+		}
+		return value;
 	}
 
 	private void performMove(int i) {
