@@ -35,6 +35,9 @@ public class PlayerAI {
 	private static final int CAPTURE_CONTROL_POINT_POINTS = 400;
 	private static final int PICKUP_POINTS = 50;
 
+	private static final int NO_MAINFRAME_MAX_TEAM_DISTANCE = 5;
+	private static final int NO_MAINFRAME_GROUPING_POINTS = 250;
+
 	private static final float MOVE_MULTIPLIER = 1.0f;
 	private static final float SHOOT_MULTIPLIER = 1.0f;
 	private static final float SHIELD_MULTIPLIER = 1.0f;
@@ -291,7 +294,7 @@ public class PlayerAI {
 						// defend the point if there are enemies around
 						for (int j = 0; j < enemyUnits.length; j++) {
 							// ignore dead units
-							if (enemyUnits[j].getHealth() == 0)
+							if (enemyUnits[j].getHealth() <= 0)
 								continue;
 							int pathLengthFromEnemy = world.getPathLength(
 									enemyUnits[j].getPosition(),
@@ -325,8 +328,8 @@ public class PlayerAI {
 						} else {
 							// Don't go to enemy cp that are guarded
 							for (int j = 0; j < enemyUnits.length; j++) {
-								//ignore dead enemies
-								if (enemyUnits[j].getHealth()==0)
+								// ignore dead enemies
+								if (enemyUnits[j].getHealth() == 0)
 									continue;
 								int pathLengthFromEnemy = world.getPathLength(
 										enemyUnits[j].getPosition(),
@@ -407,6 +410,31 @@ public class PlayerAI {
 						directionPoint)
 						- maximumPotentialDamageDealtPoints(i,
 								friendlyUnits[i].getPosition());
+
+				// If no one has mainframes
+				if (numberOfMainframesControlled(friendlyUnits[i].getTeam()) == 0
+						&& numberOfMainframesControlled(enemyUnits[i].getTeam()) == 0) {
+					// Try to gather as a group to stay alive
+					for (int j = 0; j < NUM_UNITS; j++) {
+						// If moving in this direction will take us to another
+						// friendlyUnit
+						if (i != j
+								&& d.equals(world.getNextDirectionInPath(
+										friendlyUnits[i].getPosition(),
+										friendlyUnits[j].getPosition()))) {
+							// Only move towards other friendlyUnits if the
+							// distance is larger than
+							// NO_MAINFRAME_MAX_TEAM_DISTANCE
+							int pathLength = world.getPathLength(
+									friendlyUnits[i].getPosition(),
+									friendlyUnits[j].getPosition());
+							if (pathLength > NO_MAINFRAME_MAX_TEAM_DISTANCE) {
+								pointsForDirection += NO_MAINFRAME_GROUPING_POINTS
+										/ (pathLength + 1);
+							}
+						}
+					}
+				}
 
 				// Choose the direction that maximizes our points
 				if (pointsForDirection > maxPoints) {
