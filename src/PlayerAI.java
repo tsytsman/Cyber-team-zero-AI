@@ -272,7 +272,7 @@ public class PlayerAI {
 					// the path length by 1
 					if (getDifferenceInPathLengths(
 							friendlyUnits[i].getPosition(), directionPoint,
-							cp.getPosition()) < 0) {
+							cp.getPosition()) < 1) {
 						continue;
 					}
 					int cpPoints = 200;
@@ -334,6 +334,7 @@ public class PlayerAI {
 									world.getPathLength(directionPoint,
 											p.getPosition()) + 1,
 									MOVE_DISTANCE_EXPONENT);
+
 				}
 
 				pointsForDirection -= maximumPotentialDamageTaken(directionPoint)
@@ -366,6 +367,7 @@ public class PlayerAI {
 		// for each enemy, check what happens if all friendly units try to shot
 		// him
 		int maxPoints = Integer.MIN_VALUE;
+		int minEnemyHP = Integer.MAX_VALUE;
 		for (int j = 0; j < enemyUnits.length; j++) {
 			// If shooting the current enemy isn't valid, skip it
 			if (friendlyUnits[i].checkShotAgainstEnemy(enemyUnits[j]) != ShotResult.CAN_HIT_ENEMY) {
@@ -401,6 +403,15 @@ public class PlayerAI {
 			if (points > maxPoints) {
 				maxPoints = points;
 				enemiesToShoot[i] = enemyUnits[j];
+				minEnemyHP = enemyUnits[j].getHealth();
+			} else if (points == maxPoints){
+				//if we can shoot more than 1 guy
+				if (enemyUnits[j].getHealth() < minEnemyHP){
+					//we pick guy with least health
+					maxPoints = points;
+					enemiesToShoot[i] = enemyUnits[j];
+					minEnemyHP = enemyUnits[j].getHealth();
+				}
 			}
 		}
 		if (isOnCP(friendlyUnits[i].getPosition()))
@@ -583,7 +594,7 @@ public class PlayerAI {
 			value = 250;
 			break;
 		case SHIELD:
-			value = 100;
+			value = 200;
 			break;
 		case WEAPON_LASER_RIFLE:
 			if (currentWeapon == WeaponType.LASER_RIFLE) {
