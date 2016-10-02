@@ -323,6 +323,10 @@ public class PlayerAI {
 											p.getPosition()) + 1, 1.5f);
 				}
 
+				pointsForDirection -= maximumPotentialDamageTaken(directionPoint) * 10;
+				pointsForDirection += maximumPotentialDamageDealtPoints(i,
+						directionPoint);
+
 				if (pointsForDirection > maxPoints) {
 					maxPoints = pointsForDirection;
 					bestDirection = d;
@@ -401,7 +405,7 @@ public class PlayerAI {
 		// the other enemy has a mainframe and we do not
 
 		// calculate amount of damage we might take next turn
-		int amountOfDamageTaken = maximumPotentialDamage(friendlyUnits[i]
+		int amountOfDamageTaken = maximumPotentialDamageTaken(friendlyUnits[i]
 				.getPosition());
 		int amountOfPoints = amountOfDamageTaken * 10;
 		if (friendlyUnits[i].getHealth() < amountOfDamageTaken) {
@@ -417,14 +421,14 @@ public class PlayerAI {
 	}
 
 	/**
-	 * Determine the maximum potential damage that friendly unit will take next
-	 * move
+	 * Determine the maximum potential damage that enemies can deal to a certain
+	 * point.
 	 * 
 	 * @param p
 	 *            point that we are interested in.
-	 * @return maximum damage our unit will take next turn
+	 * @return maximum damage that enemies can deal to that location next turn
 	 */
-	private int maximumPotentialDamage(Point p) {
+	private int maximumPotentialDamageTaken(Point p) {
 		int amountOfDamageTaken = 0;
 		int damageMultiplier = 0;
 		for (int j = 0; j < enemyUnits.length; j++) {
@@ -437,9 +441,73 @@ public class PlayerAI {
 				damageMultiplier++;
 			}
 		}
-		int amountOfDamageTakenWithMultiplier = amountOfDamageTaken
-				* damageMultiplier;
-		return amountOfDamageTakenWithMultiplier;
+		return amountOfDamageTaken * damageMultiplier;
+	}
+
+	/**
+	 * Determine the maximum potential damage that we can deal to enemies if
+	 * friendlyUnit i moves to point p.
+	 * 
+	 * @param i
+	 *            The index of the friendlyUnit we are interested in.
+	 * @param p
+	 *            The point we are interested in.
+	 * @return The maximum damage that we can deal to enemies if friendlyUnit i
+	 *         moves to Point p.
+	 */
+	private int maximumPotentialDamageDealtPoints(int i, Point p) {
+		// Store the currentMoveAction for the current friendlyUnit
+		// Point currentMoveAction = currentMoveActions[i];
+		// currentMoveActions[i] = p;
+
+		int maxPoints = 0;
+
+		// For each enemyUnit
+		for (int j = 0; j < NUM_UNITS; j++) {
+			// If shooting the current enemy isn't valid, skip it
+			if (!world.canShooterShootTarget(p, enemyUnits[j].getPosition(),
+					friendlyUnits[i].getCurrentWeapon().getRange())) {
+				continue;
+			}
+
+			int totalDamage = 0;
+			int damageMultiplier = 0;
+
+			// For each friendlyUnit
+			for (int k = 0; k < NUM_UNITS; k++) {
+				// Determine the position of the friendlyUnit next turn
+				Point nextFriendlyPosition = currentMoveActions[k] != null ? currentMoveActions[k]
+						: friendlyUnits[k].getPosition();
+				// If the current friendlyUnit is the ith friendlyUnit, we need
+				// to consider moving to point p
+				if (i == k) {
+					nextFriendlyPosition = p;
+				}
+
+				if (world.canShooterShootTarget(nextFriendlyPosition,
+						enemyUnits[j].getPosition(), friendlyUnits[k]
+								.getCurrentWeapon().getRange())) {
+					totalDamage += friendlyUnits[k].getCurrentWeapon()
+							.getDamage();
+					damageMultiplier++;
+				}
+			}
+
+			int damage = totalDamage * damageMultiplier;
+			int points = damage * 10;
+			// if we kill the enemy, add 100 points
+			if (enemyUnits[j].getHealth() <= damage) {
+				points += 100;
+			}
+
+			if (points > maxPoints) {
+				points = maxPoints;
+			}
+		}
+
+		// Restore the currentMoveAction for the current friendlyUnit
+		// currentMoveActions[i] = currentMoveAction;
+		return maxPoints;
 	}
 
 	/**
@@ -458,7 +526,7 @@ public class PlayerAI {
 		PickupType currentPickupType = world.getPickupAtPosition(
 				friendlyUnits[i].getPosition()).getPickupType();
 
-		int damageWillTake = maximumPotentialDamage(friendlyUnits[i]
+		int damageWillTake = maximumPotentialDamageTaken(friendlyUnits[i]
 				.getPosition());
 		// if pickup type is a health kit
 		if (currentPickupType == PickupType.REPAIR_KIT) {
