@@ -327,6 +327,9 @@ public class PlayerAI {
 						} else {
 							// Don't go to enemy cp that are guarded
 							for (int j = 0; j < enemyUnits.length; j++) {
+								//ignore dead enemies
+								if (enemyUnits[j].getHealth()==0)
+									continue;
 								int pathLengthFromEnemy = world.getPathLength(
 										enemyUnits[j].getPosition(),
 										cp.getPosition());
