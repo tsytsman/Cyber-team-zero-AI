@@ -349,11 +349,6 @@ public class PlayerAI {
 						* POINTS_PER_DAMAGE;
 				pointsForDirection += maximumPotentialDamageDealtPoints(i,
 						directionPoint);
-				
-				System.out.println("Point " + directionPoint + ", pointsForDirection: " + pointsForDirection + ", damageTaken: " + maximumPotentialDamageTaken(directionPoint)
-						* POINTS_PER_DAMAGE + ", damageDealt: " + maximumPotentialDamageDealtPoints(i,
-								directionPoint));
-				
 
 				if (pointsForDirection > maxPoints) {
 					maxPoints = pointsForDirection;
@@ -417,10 +412,10 @@ public class PlayerAI {
 				maxPoints = points;
 				enemiesToShoot[i] = enemyUnits[j];
 				minEnemyHP = enemyUnits[j].getHealth();
-			} else if (points == maxPoints){
-				//if we can shoot more than 1 guy
-				if (enemyUnits[j].getHealth() < minEnemyHP){
-					//we pick guy with least health
+			} else if (points == maxPoints) {
+				// if we can shoot more than 1 guy
+				if (enemyUnits[j].getHealth() < minEnemyHP) {
+					// we pick guy with least health
 					maxPoints = points;
 					enemiesToShoot[i] = enemyUnits[j];
 					minEnemyHP = enemyUnits[j].getHealth();
