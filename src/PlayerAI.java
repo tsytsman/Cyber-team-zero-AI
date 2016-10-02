@@ -20,23 +20,24 @@ import com.orbischallenge.game.engine.Point;
 public class PlayerAI {
 
 	private static final int NUM_UNITS = 4;
-	private static final int CP_DEFEND_SHOOT_MULTIPLIER = 10;
+	private static final int CP_DEFEND_SHOOT_MULTIPLIER = 7;
 	private static final int CP_DEFEND_ENEMY_PROXIMITY = 3;
 	private static final int CP_DEFEND_POINTS_PER_MOVE_MULTIPLIER = 100;
 	private static final float MAINFRAME_DAMAGE_MULTIPLIER = 1.5f;
 	private static final float MAINFRAME_DEFENSE_MULTIPLIER = 1.5f;
 
-	private static final int POINTS_PER_DAMAGE = 20;
+	private static final int POINTS_PER_DAMAGE = 10;
 	private static final int REPAIR_KIT_HEALTH_AMOUNT = 20;
-	private static final float MOVE_DISTANCE_EXPONENT = 1.5f;
+	private static final float MOVE_DISTANCE_EXPONENT = 2f;
 	private static final int ENEMY_KILL_POINTS = 100;
 	private static final int NEUTRALIZE_CONTROL_POINT_POINTS = 775;
+	private static final int CAPTURE_CONTROL_POINT_POINTS = 200;
 	private static final int PICKUP_POINTS = 50;
 
 	private static final float MOVE_MULTIPLIER = 1.0f;
 	private static final float SHOOT_MULTIPLIER = 1.0f;
 	private static final float SHIELD_MULTIPLIER = 1.0f;
-	private static final float PICKUP_MULTIPLIER = 1.0f;
+	private static final float PICKUP_MULTIPLIER = 2.0f;
 
 	// The latest state of the world.
 	private World world;
@@ -282,7 +283,7 @@ public class PlayerAI {
 							cp.getPosition()) != 1) {
 						continue;
 					}
-					int cpPoints = 200;
+					int cpPoints;
 					if (cp.getControllingTeam() == friendlyUnits[i].getTeam()) {
 						cpPoints = 0;
 						// defend the point if there are enemies around
@@ -299,13 +300,28 @@ public class PlayerAI {
 						}
 					} else if (cp.getControllingTeam() == Team
 							.opposite(friendlyUnits[i].getTeam())) {
-						if (cp.isMainframe())
-							// add 400 extra points for mainframe
-							cpPoints += 400;
 						// NEUTRALIZE_CONTROL_POINT_POINTS extra points for
 						// neutralizing an opposing control
 						// point
-						cpPoints += NEUTRALIZE_CONTROL_POINT_POINTS;
+						cpPoints = NEUTRALIZE_CONTROL_POINT_POINTS;
+
+						if (cp.isMainframe()) {
+							// add 400 extra points for mainframe
+							cpPoints += 400;
+						} else {
+							// Don't go to enemy cp that are guarded
+							for (int j = 0; j < enemyUnits.length; j++) {
+								int pathLengthFromEnemy = world.getPathLength(
+										enemyUnits[j].getPosition(),
+										cp.getPosition());
+								if (pathLengthFromEnemy <= 2) {
+									cpPoints = 0;
+									break;
+								}
+							}
+						}
+					} else {
+						cpPoints = CAPTURE_CONTROL_POINT_POINTS;
 					}
 					int distanceToCP = world.getPathLength(directionPoint,
 							cp.getPosition());
@@ -345,11 +361,25 @@ public class PlayerAI {
 
 				}
 
-				pointsForDirection -= maximumPotentialDamageTaken(directionPoint)
+				// Calculate the damage and points received by the enemy for
+				// damaging us in the new position
+				int potentialDamageTaken = maximumPotentialDamageTaken(directionPoint);
+				int damageTakenPoints = potentialDamageTaken
 						* POINTS_PER_DAMAGE;
+
+				// If the hit will kill us then factor in the enemy gaining
+				// ENEMY_KILL_POINTS
+				if (friendlyUnits[i].getHealth() <= potentialDamageTaken) {
+					damageTakenPoints += ENEMY_KILL_POINTS;
+				}
+
+				// Subtract the points that the enemy would get for us moving
+				// there and add the points that we would get for moving there
+				pointsForDirection -= damageTakenPoints;
 				pointsForDirection += maximumPotentialDamageDealtPoints(i,
 						directionPoint);
 
+				// Choose the direction that maximizes our points
 				if (pointsForDirection > maxPoints) {
 					maxPoints = pointsForDirection;
 					bestDirection = d;
@@ -542,10 +572,6 @@ public class PlayerAI {
 	/**
 	 * Determine the maximum number of points we can get if we were to perform a
 	 * pickup action for a specific friendlyUnit.
-	 * 
-	 * TODO: factor out code to use a function like valueOfPickup(Pickup pickup)
-	 * which could be used in the heuristic for picking up immediately and for
-	 * moving to a pickup
 	 * 
 	 * @param i
 	 *            The index of the friendlyUnit we are interested in.
