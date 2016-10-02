@@ -20,6 +20,7 @@ import com.orbischallenge.game.engine.Point;
 public class PlayerAI {
 
 	private static final int NUM_UNITS = 4;
+	private static final int CP_DEFEND_SHOOT_MULTIPLIER = 3;
 	private static final float MAINFRAME_DAMAGE_MULTIPLIER = 1.5f;
 	private static final float MAINFRAME_DEFENSE_MULTIPLIER = 1.5f;
 
@@ -290,12 +291,16 @@ public class PlayerAI {
 							cpPoints += 400;
 						cpPoints += 50;
 					}
+					int distanceToCP = world.getPathLength(directionPoint,
+							cp.getPosition());
+					//any point within 1 radius counts as CP point
+					if (distanceToCP == 0)
+						distanceToCP++;
 					// Make the points for this cp drop off with distance
 					// according to x^1.5
 					pointsForDirection += cpPoints
 							/ Math.pow(
-									world.getPathLength(directionPoint,
-											cp.getPosition()) + 1, 1.5f);
+									distanceToCP, 1.5f);
 				}
 
 				for (Pickup p : pickups) {
@@ -385,6 +390,8 @@ public class PlayerAI {
 				enemiesToShoot[i] = enemyUnits[j];
 			}
 		}
+		if (isOnCP(friendlyUnits[i].getPosition()))
+			maxPoints = maxPoints * CP_DEFEND_SHOOT_MULTIPLIER;
 		return maxPoints;
 	}
 
