@@ -72,6 +72,26 @@ public class PlayerAI {
 	}
 
 	/**
+	 * Determine whether given point is a part of a control point
+	 * 
+	 * @param p
+	 *            Point we are interested in.
+	 * @return True if given point is a part of CP, false otherwise.
+	 */
+	private boolean isOnCP(Point p) {
+		// Check all control points, and check if we are within 1 block away
+		ControlPoint[] controlPoints = world.getControlPoints();
+
+		for (ControlPoint cp : controlPoints) {
+			// Only consider this cp if the current direction decreases
+			// the path length by 1
+			if (world.getPathLength(p, cp.getPosition()) < 2)
+				return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Determine whether a friendlyUnit can make a shoot action.
 	 * 
 	 * @param i
@@ -250,10 +270,12 @@ public class PlayerAI {
 					int cpPoints = 200;
 					if (cp.getControllingTeam() == friendlyUnits[i].getTeam()) {
 						cpPoints = 0;
-						//defend the point if there are enemies around
-						for (int j = 0; j < enemyUnits.length; j++){
-							int pathLengthFromEnemy = world.getPathLength(enemyUnits[j].getPosition(), cp.getPosition());
-							if(pathLengthFromEnemy < 4){
+						// defend the point if there are enemies around
+						for (int j = 0; j < enemyUnits.length; j++) {
+							int pathLengthFromEnemy = world.getPathLength(
+									enemyUnits[j].getPosition(),
+									cp.getPosition());
+							if (pathLengthFromEnemy < 4) {
 								if (pathLengthFromEnemy == 0)
 									pathLengthFromEnemy = 1;
 								cpPoints += (3 - pathLengthFromEnemy) * 100;
@@ -333,7 +355,8 @@ public class PlayerAI {
 			}
 			int totalDamage = 0;
 			int damageMultiplier = 0;
-			// Calculate the total amount of damage we can do to this enemy with all units
+			// Calculate the total amount of damage we can do to this enemy with
+			// all units
 			for (int k = 0; k < friendlyUnits.length; k++) {
 				if (friendlyUnits[k].checkShotAgainstEnemy(enemyUnits[j]) == ShotResult.CAN_HIT_ENEMY) {
 					totalDamage += friendlyUnits[k].getCurrentWeapon()
@@ -347,7 +370,8 @@ public class PlayerAI {
 			if (enemyUnits[j].getHealth() <= damage) {
 				points += 100;
 			}
-			// If the enemy doesn't have a mainframe and we do, we want to shoot them more
+			// If the enemy doesn't have a mainframe and we do, we want to shoot
+			// them more
 			if (numberOfMainframesControlled(enemyUnits[j].getTeam()) == 0
 					&& numberOfMainframesControlled(friendlyUnits[i].getTeam()) > 0) {
 				// TODO: figure out a multiplier in case enemies have no
