@@ -215,13 +215,19 @@ public class PlayerAI {
 
 		// Moves onto enemy tiles are not valid
 		for (EnemyUnit enemyUnit : enemyUnits) {
-			if (movePosition.equals(enemyUnit.getPosition())) {
+			// Only prevent moving on enemy if they are alive
+			if (movePosition.equals(enemyUnit.getPosition())
+					&& enemyUnit.getHealth() > 0) {
 				return false;
 			}
 		}
 
 		// For each friendly unit
 		for (int j = 0; j < NUM_UNITS; j++) {
+			// If this friendly unit is dead, we can move to its position
+			if (friendlyUnits[j].getHealth() <= 0) {
+				continue;
+			}
 			if (currentMoveActions[j] != null
 					&& currentMoveActions[j].equals(movePosition)) {
 				// If the current unit moving in the specified direction is the
@@ -745,35 +751,67 @@ public class PlayerAI {
 			value = 200;
 			break;
 		case WEAPON_LASER_RIFLE:
-			if (currentWeapon == WeaponType.LASER_RIFLE) {
+			switch (currentWeapon) {
+			case LASER_RIFLE:
 				value = PICKUP_POINTS;
-			} else {
-				value = 150;
+				break;
+			case MINI_BLASTER:
+				value = 100;
+				break;
+			case RAIL_GUN:
+				value = 0;
+				break;
+			case SCATTER_GUN:
+				value = 0;
+				break;
 			}
 			break;
 		case WEAPON_MINI_BLASTER:
-			if (currentWeapon == WeaponType.MINI_BLASTER) {
-				// if we have this weapon, we will get PICKUP_POINTS points for
-				// picking it up
-				value = PICKUP_POINTS;
-			} else {
-				// else, we have something better
+			switch (currentWeapon) {
+			case LASER_RIFLE:
 				value = 0;
+				break;
+			case MINI_BLASTER:
+				value = PICKUP_POINTS;
+				break;
+			case RAIL_GUN:
+				value = 0;
+				break;
+			case SCATTER_GUN:
+				value = 0;
+				break;
 			}
 			break;
 		case WEAPON_RAIL_GUN:
-			if (currentWeapon == WeaponType.RAIL_GUN) {
-				value = PICKUP_POINTS;
-			} else {
-				// sniper rifle is the shit
+			switch (currentWeapon) {
+			case LASER_RIFLE:
 				value = 200;
+				break;
+			case MINI_BLASTER:
+				value = 200;
+				break;
+			case RAIL_GUN:
+				value = PICKUP_POINTS;
+				break;
+			case SCATTER_GUN:
+				value = 200;
+				break;
 			}
 			break;
 		case WEAPON_SCATTER_GUN:
-			if (currentWeapon == WeaponType.SCATTER_GUN) {
+			switch (currentWeapon) {
+			case LASER_RIFLE:
+				value = 150;
+				break;
+			case MINI_BLASTER:
+				value = 150;
+				break;
+			case RAIL_GUN:
+				value = 0;
+				break;
+			case SCATTER_GUN:
 				value = PICKUP_POINTS;
-			} else {
-				value = 100;
+				break;
 			}
 			break;
 		default:
