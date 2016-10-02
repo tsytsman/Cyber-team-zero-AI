@@ -20,7 +20,9 @@ import com.orbischallenge.game.engine.Point;
 public class PlayerAI {
 
 	private static final int NUM_UNITS = 4;
-	private static final int CP_DEFEND_SHOOT_MULTIPLIER = 3;
+	private static final int CP_DEFEND_SHOOT_MULTIPLIER = 10;
+	private static final int CP_DEFEND_ENEMY_PROXIMITY = 3;
+	private static final int CP_DEFEND_POINTS_PER_MOVE_MULTIPLIER = 100;
 	private static final float MAINFRAME_DAMAGE_MULTIPLIER = 1.5f;
 	private static final float MAINFRAME_DEFENSE_MULTIPLIER = 1.5f;
 
@@ -276,10 +278,11 @@ public class PlayerAI {
 							int pathLengthFromEnemy = world.getPathLength(
 									enemyUnits[j].getPosition(),
 									cp.getPosition());
-							if (pathLengthFromEnemy < 4) {
+							if (pathLengthFromEnemy <= CP_DEFEND_ENEMY_PROXIMITY) {
 								if (pathLengthFromEnemy == 0)
 									pathLengthFromEnemy = 1;
-								cpPoints += (3 - pathLengthFromEnemy) * 100;
+								cpPoints += (CP_DEFEND_ENEMY_PROXIMITY - pathLengthFromEnemy)
+										* CP_DEFEND_POINTS_PER_MOVE_MULTIPLIER;
 							}
 						}
 					} else if (cp.getControllingTeam() == Team
