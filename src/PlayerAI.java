@@ -30,7 +30,7 @@ public class PlayerAI {
 	private static final int REPAIR_KIT_HEALTH_AMOUNT = 20;
 	private static final float MOVE_DISTANCE_EXPONENT = 1.5f;
 	private static final int ENEMY_KILL_POINTS = 100;
-	private static final int NEUTRALIZE_CONTROL_POINT_POINTS = 50;
+	private static final int NEUTRALIZE_CONTROL_POINT_POINTS = 775;
 	private static final int PICKUP_POINTS = 50;
 
 	private static final float MOVE_MULTIPLIER = 1.0f;
@@ -279,7 +279,7 @@ public class PlayerAI {
 					// the path length by 1
 					if (getDifferenceInPathLengths(
 							friendlyUnits[i].getPosition(), directionPoint,
-							cp.getPosition()) < 1) {
+							cp.getPosition()) != 1) {
 						continue;
 					}
 					int cpPoints = 200;
@@ -313,7 +313,7 @@ public class PlayerAI {
 					if (distanceToCP == 0)
 						distanceToCP++;
 					// Make the points for this cp drop off with distance
-					// according to x^1.5
+					// according to x^MOVE_DISTANCE_EXPONENT
 					pointsForDirection += cpPoints
 							/ Math.pow(distanceToCP, MOVE_DISTANCE_EXPONENT);
 				}
@@ -323,7 +323,7 @@ public class PlayerAI {
 					// decreases the path length by 1
 					if (getDifferenceInPathLengths(
 							friendlyUnits[i].getPosition(), directionPoint,
-							p.getPosition()) < 0) {
+							p.getPosition()) != 1) {
 						continue;
 					}
 					int pickupPoints = valueOfPickup(i, p.getPickupType());
@@ -336,7 +336,7 @@ public class PlayerAI {
 							continue;
 					}
 					// Make the points for this pickup drop off with distance
-					// according to x^1.5
+					// according to x^MOVE_DISTANCE_EXPONENT
 					pointsForDirection += pickupPoints
 							/ Math.pow(
 									world.getPathLength(directionPoint,
@@ -349,6 +349,11 @@ public class PlayerAI {
 						* POINTS_PER_DAMAGE;
 				pointsForDirection += maximumPotentialDamageDealtPoints(i,
 						directionPoint);
+				
+				System.out.println("Point " + directionPoint + ", pointsForDirection: " + pointsForDirection + ", damageTaken: " + maximumPotentialDamageTaken(directionPoint)
+						* POINTS_PER_DAMAGE + ", damageDealt: " + maximumPotentialDamageDealtPoints(i,
+								directionPoint));
+				
 
 				if (pointsForDirection > maxPoints) {
 					maxPoints = pointsForDirection;
@@ -492,10 +497,6 @@ public class PlayerAI {
 	 *         moves to Point p.
 	 */
 	private int maximumPotentialDamageDealtPoints(int i, Point p) {
-		// Store the currentMoveAction for the current friendlyUnit
-		// Point currentMoveAction = currentMoveActions[i];
-		// currentMoveActions[i] = p;
-
 		int maxPoints = 0;
 
 		// For each enemyUnit
@@ -537,12 +538,9 @@ public class PlayerAI {
 			}
 
 			if (points > maxPoints) {
-				points = maxPoints;
+				maxPoints = points;
 			}
 		}
-
-		// Restore the currentMoveAction for the current friendlyUnit
-		// currentMoveActions[i] = currentMoveAction;
 		return maxPoints;
 	}
 
