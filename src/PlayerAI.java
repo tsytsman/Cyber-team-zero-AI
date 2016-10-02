@@ -23,6 +23,11 @@ public class PlayerAI {
 	private static final float MAINFRAME_DAMAGE_MULTIPLIER = 1.5f;
 	private static final float MAINFRAME_DEFENSE_MULTIPLIER = 1.5f;
 
+	private static final int POINTS_PER_DAMAGE = 20;
+	private static final int REPAIR_KIT_HEALTH_AMOUNT = 20;
+	private static final float MOVE_DISTANCE_EXPONENT = 1.5f;
+	private static final int ENEMY_KILL_POINTS = 100;
+
 	// The latest state of the world.
 	private World world;
 	// An array of all 4 units on the enemy team. Their order won't change.
@@ -295,7 +300,8 @@ public class PlayerAI {
 					pointsForDirection += cpPoints
 							/ Math.pow(
 									world.getPathLength(directionPoint,
-											cp.getPosition()) + 1, 1.5f);
+											cp.getPosition()) + 1,
+									MOVE_DISTANCE_EXPONENT);
 				}
 
 				for (Pickup p : pickups) {
@@ -320,10 +326,12 @@ public class PlayerAI {
 					pointsForDirection += pickupPoints
 							/ Math.pow(
 									world.getPathLength(directionPoint,
-											p.getPosition()) + 1, 1.5f);
+											p.getPosition()) + 1,
+									MOVE_DISTANCE_EXPONENT);
 				}
 
-				pointsForDirection -= maximumPotentialDamageTaken(directionPoint) * 10;
+				pointsForDirection -= maximumPotentialDamageTaken(directionPoint)
+						* POINTS_PER_DAMAGE;
 				pointsForDirection += maximumPotentialDamageDealtPoints(i,
 						directionPoint);
 
@@ -369,10 +377,10 @@ public class PlayerAI {
 				}
 			}
 			int damage = totalDamage * damageMultiplier;
-			int points = damage * 10;
-			// if we kill the enemy, add 100 points
+			int points = damage * POINTS_PER_DAMAGE;
+			// if we kill the enemy, add ENEMY_KILL_POINTS points
 			if (enemyUnits[j].getHealth() <= damage) {
-				points += 100;
+				points += ENEMY_KILL_POINTS;
 			}
 			// If the enemy doesn't have a mainframe and we do, we want to shoot
 			// them more
@@ -407,10 +415,11 @@ public class PlayerAI {
 		// calculate amount of damage we might take next turn
 		int amountOfDamageTaken = maximumPotentialDamageTaken(friendlyUnits[i]
 				.getPosition());
-		int amountOfPoints = amountOfDamageTaken * 10;
+		int amountOfPoints = amountOfDamageTaken * POINTS_PER_DAMAGE;
 		if (friendlyUnits[i].getHealth() < amountOfDamageTaken) {
-			// unit will die, and enemy will receive additional 100 points
-			amountOfPoints += 100;
+			// unit will die, and enemy will receive additional
+			// ENEMY_KILL_POINTS points
+			amountOfPoints += ENEMY_KILL_POINTS;
 		}
 		if (numberOfMainframesControlled(enemyUnits[i].getTeam()) > 0
 				&& numberOfMainframesControlled(friendlyUnits[i].getTeam()) == 0) {
@@ -494,10 +503,10 @@ public class PlayerAI {
 			}
 
 			int damage = totalDamage * damageMultiplier;
-			int points = damage * 10;
-			// if we kill the enemy, add 100 points
+			int points = damage * POINTS_PER_DAMAGE;
+			// if we kill the enemy, add ENEMY_KILL_POINTS points
 			if (enemyUnits[j].getHealth() <= damage) {
-				points += 100;
+				points += ENEMY_KILL_POINTS;
 			}
 
 			if (points > maxPoints) {
@@ -530,13 +539,14 @@ public class PlayerAI {
 				.getPosition());
 		// if pickup type is a health kit
 		if (currentPickupType == PickupType.REPAIR_KIT) {
-			if (damageWillTake >= 20) {
-				// if we will take more than 20 dmg next move
-				// picking up repair kit will not be beneficial
+			if (damageWillTake >= REPAIR_KIT_HEALTH_AMOUNT) {
+				// if we will take more than REPAIR_KIT_HEALTH_AMOUNT dmg next
+				// move picking up repair kit will not be beneficial
 				return 0;
 			} else {
-				// net Health Gained * 10 points + 50 for pickup
-				return (20 - damageWillTake) * 10 + 50;
+				// net Health Gained * POINTS_PER_DAMAGE points + 50 for pickup
+				return (REPAIR_KIT_HEALTH_AMOUNT - damageWillTake)
+						* POINTS_PER_DAMAGE + 50;
 			}
 		}
 		if (currentPickupType == PickupType.SHIELD) {
@@ -679,8 +689,6 @@ public class PlayerAI {
 				+ ": move=" + movePoints + " shoot=" + shootPoints + " shield="
 				+ shieldPoints + " pickup=" + pickupPoints);
 
-		// TODO: make this better, right now the priority is fixed - shield then
-		// shoot then move then pickup
 		if (canShield && shieldPoints == maxPoints) {
 			System.out.println("    Performing shield");
 			// If we can shield, and doing so would maximize our points
@@ -689,14 +697,14 @@ public class PlayerAI {
 			System.out.println("    Performing shoot");
 			// If we can shoot, and doing so would maximize our points
 			performShoot(i);
-		} else if (canMove && movePoints == maxPoints) {
-			System.out.println("    Performing move");
-			// If we can move, and doing so would maximize our points
-			performMove(i);
 		} else if (canPickup && pickupPoints == maxPoints) {
 			System.out.println("    Performing pickup");
 			// If we can pickup, and doing so would maximize our points
 			performPickup(i);
+		} else if (canMove && movePoints == maxPoints) {
+			System.out.println("    Performing move");
+			// If we can move, and doing so would maximize our points
+			performMove(i);
 		} else {
 			System.out.println("    Standing by...");
 			friendlyUnits[i].standby();
