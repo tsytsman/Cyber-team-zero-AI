@@ -38,6 +38,8 @@ public class PlayerAI {
 	private static final float SHOOT_MULTIPLIER = 1.0f;
 	private static final float SHIELD_MULTIPLIER = 1.0f;
 	private static final float PICKUP_MULTIPLIER = 2.0f;
+	
+	private static final float MOVE_DAMAGE_MULTIPLIER = 0.5f;
 
 	// The latest state of the world.
 	private World world;
@@ -375,9 +377,9 @@ public class PlayerAI {
 
 				// Subtract the points that the enemy would get for us moving
 				// there and add the points that we would get for moving there
-				pointsForDirection -= damageTakenPoints;
+				pointsForDirection -= damageTakenPoints * MOVE_DAMAGE_MULTIPLIER;
 				pointsForDirection += maximumPotentialDamageDealtPoints(i,
-						directionPoint);
+						directionPoint) * MOVE_DAMAGE_MULTIPLIER;
 
 				// Choose the direction that maximizes our points
 				if (pointsForDirection > maxPoints) {
@@ -500,8 +502,9 @@ public class PlayerAI {
 		for (int j = 0; j < enemyUnits.length; j++) {
 			// get unit's range
 			int range = enemyUnits[j].getCurrentWeapon().getRange();
+			// If the enemy can shoot the target and the enemy is alive
 			if (world.canShooterShootTarget(enemyUnits[j].getPosition(), p,
-					range)) {
+					range) && enemyUnits[j].getHealth() > 0) {
 				amountOfDamageTaken += enemyUnits[j].getCurrentWeapon()
 						.getDamage();
 				damageMultiplier++;
@@ -528,7 +531,8 @@ public class PlayerAI {
 		for (int j = 0; j < NUM_UNITS; j++) {
 			// If shooting the current enemy isn't valid, skip it
 			if (!world.canShooterShootTarget(p, enemyUnits[j].getPosition(),
-					friendlyUnits[i].getCurrentWeapon().getRange())) {
+					friendlyUnits[i].getCurrentWeapon().getRange())
+					&& enemyUnits[j].getHealth() > 0) {
 				continue;
 			}
 
@@ -541,14 +545,16 @@ public class PlayerAI {
 				Point nextFriendlyPosition = currentMoveActions[k] != null ? currentMoveActions[k]
 						: friendlyUnits[k].getPosition();
 				// If the current friendlyUnit is the ith friendlyUnit, we need
-				// to consider moving to point p
+				// to consider that it's moving to point p
 				if (i == k) {
 					nextFriendlyPosition = p;
 				}
 
+				// If the friendlyUnit can shoot the target and it's alive
 				if (world.canShooterShootTarget(nextFriendlyPosition,
 						enemyUnits[j].getPosition(), friendlyUnits[k]
-								.getCurrentWeapon().getRange())) {
+								.getCurrentWeapon().getRange())
+						&& enemyUnits[j].getHealth() > 0) {
 					totalDamage += friendlyUnits[k].getCurrentWeapon()
 							.getDamage();
 					damageMultiplier++;
