@@ -40,8 +40,6 @@ public class PlayerAI {
 	private static final float SHIELD_MULTIPLIER = 1.0f;
 	private static final float PICKUP_MULTIPLIER = 3.0f;
 
-	private static final float MOVE_DAMAGE_MULTIPLIER = 0.5f;
-
 	// The latest state of the world.
 	private World world;
 	// An array of all 4 units on the enemy team. Their order won't change.
@@ -292,8 +290,8 @@ public class PlayerAI {
 						cpPoints = 0;
 						// defend the point if there are enemies around
 						for (int j = 0; j < enemyUnits.length; j++) {
-							//ignore dead units
-							if (enemyUnits[j].getHealth()==0)
+							// ignore dead units
+							if (enemyUnits[j].getHealth() == 0)
 								continue;
 							int pathLengthFromEnemy = world.getPathLength(
 									enemyUnits[j].getPosition(),
@@ -316,12 +314,12 @@ public class PlayerAI {
 							// add 400 extra points for mainframe
 							cpPoints += 400;
 							distanceExponent = MOVE_DISTANCE_MAINFRAME_EXPONENT;
-							//if we have no mainframes, but enemy does
+							// if we have no mainframes, but enemy does
 							if (numberOfMainframesControlled(friendlyUnits[i]
 									.getTeam()) == 0
 									&& numberOfMainframesControlled(enemyUnits[i]
 											.getTeam()) > 0) {
-								//rush for mainframe!!!
+								// rush for mainframe!!!
 								distanceExponent = 1;
 							}
 						} else {
@@ -376,36 +374,36 @@ public class PlayerAI {
 									MOVE_DISTANCE_EXPONENT);
 
 				}
-				
-				// If the enemy has no main frames, move towards enemies
-				// TODO: Think about this
-				/*if (numberOfMainframesControlled(Team.opposite(friendlyUnits[i].getTeam())) == 0) {
-					for (EnemyUnit enemyUnit : enemyUnits) {
-						// If the current direction will bring us towards an enemy
-						if (d.equals(world.getNextDirectionInPath(friendlyUnits[i].getPosition(), enemyUnit.getPosition()))) {
-							pointsForDirection += 1000 / (world.getPathLength(friendlyUnits[i].getPosition(), enemyUnit.getPosition()) + 1);
-						}
-					}
-				}*/
+
+				int potentialDamageTakenByStaying = maximumPotentialDamageTaken(friendlyUnits[i]
+						.getPosition());
+				int damageTakenByStayingPoints = potentialDamageTakenByStaying
+						* POINTS_PER_DAMAGE;
+
+				if (friendlyUnits[i].getHealth() <= potentialDamageTakenByStaying) {
+					damageTakenByStayingPoints += ENEMY_KILL_POINTS;
+				}
 
 				// Calculate the damage and points received by the enemy for
 				// damaging us in the new position
-				int potentialDamageTaken = maximumPotentialDamageTaken(directionPoint);
-				int damageTakenPoints = potentialDamageTaken
+				int potentialDamageTakenByMoving = maximumPotentialDamageTaken(directionPoint);
+				int damageTakenByMovingPoints = potentialDamageTakenByMoving
 						* POINTS_PER_DAMAGE;
 
 				// If the hit will kill us then factor in the enemy gaining
 				// ENEMY_KILL_POINTS
-				if (friendlyUnits[i].getHealth() <= potentialDamageTaken) {
-					damageTakenPoints += ENEMY_KILL_POINTS;
+				if (friendlyUnits[i].getHealth() <= potentialDamageTakenByMoving) {
+					damageTakenByMovingPoints += ENEMY_KILL_POINTS;
 				}
 
-				// Subtract the points that the enemy would get for us moving
-				// there and add the points that we would get for moving there
-				pointsForDirection -= damageTakenPoints
-						* MOVE_DAMAGE_MULTIPLIER;
+				// Use the difference in damage between moving to the new
+				// position and staying in the current position
+				pointsForDirection -= damageTakenByMovingPoints
+						- damageTakenByStayingPoints;
 				pointsForDirection += maximumPotentialDamageDealtPoints(i,
-						directionPoint) * MOVE_DAMAGE_MULTIPLIER;
+						directionPoint)
+						- maximumPotentialDamageDealtPoints(i,
+								friendlyUnits[i].getPosition());
 
 				// Choose the direction that maximizes our points
 				if (pointsForDirection > maxPoints) {
