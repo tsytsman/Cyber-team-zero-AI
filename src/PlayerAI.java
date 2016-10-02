@@ -373,6 +373,17 @@ public class PlayerAI {
 									MOVE_DISTANCE_EXPONENT);
 
 				}
+				
+				// If the enemy has no main frames, move towards enemies
+				// TODO: Think about this
+				/*if (numberOfMainframesControlled(Team.opposite(friendlyUnits[i].getTeam())) == 0) {
+					for (EnemyUnit enemyUnit : enemyUnits) {
+						// If the current direction will bring us towards an enemy
+						if (d.equals(world.getNextDirectionInPath(friendlyUnits[i].getPosition(), enemyUnit.getPosition()))) {
+							pointsForDirection += 1000 / (world.getPathLength(friendlyUnits[i].getPosition(), enemyUnit.getPosition()) + 1);
+						}
+					}
+				}*/
 
 				// Calculate the damage and points received by the enemy for
 				// damaging us in the new position
