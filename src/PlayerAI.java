@@ -428,14 +428,15 @@ public class PlayerAI {
 						continue;
 					}
 
-					// Make the points for this pickup drop off with distance
-					// according to x^MOVE_DISTANCE_EXPONENT
+					// Move to help out friendly unit. We are not using
+					// exponential here
+					// There is no point in getting real close, so anything
+					// closer than 3 units is same rate
 					int distanceToEnemy = world.getPathLength(directionPoint,
 							lastUnitLocation);
 					if (distanceToEnemy < 3)
 						distanceToEnemy = 3;
-					pointsForDirection += pointsForEnemy
-							/ distanceToEnemy;
+					pointsForDirection += pointsForEnemy / distanceToEnemy;
 
 				}
 
@@ -447,7 +448,7 @@ public class PlayerAI {
 				if (friendlyUnits[i].getHealth() <= potentialDamageTakenByStaying) {
 					damageTakenByStayingPoints += ENEMY_KILL_POINTS;
 				}
-				
+
 				// Calculate the damage and points received by the enemy for
 				// damaging us in the new position
 				int potentialDamageTakenByMoving = maximumPotentialDamageTaken(directionPoint);
