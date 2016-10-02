@@ -23,22 +23,23 @@ public class PlayerAI {
 	private static final int CP_DEFEND_SHOOT_MULTIPLIER = 7;
 	private static final int CP_DEFEND_ENEMY_PROXIMITY = 3;
 	private static final int CP_DEFEND_POINTS_PER_MOVE_MULTIPLIER = 100;
-	private static final float MAINFRAME_DAMAGE_MULTIPLIER = 1.5f;
-	private static final float MAINFRAME_DEFENSE_MULTIPLIER = 1.5f;
+	private static final float MAINFRAME_DAMAGE_MULTIPLIER = 2f;
+	private static final float MAINFRAME_DEFENSE_MULTIPLIER = 2f;
 
 	private static final int POINTS_PER_DAMAGE = 10;
 	private static final int REPAIR_KIT_HEALTH_AMOUNT = 20;
-	private static final float MOVE_DISTANCE_EXPONENT = 2f;
+	private static final float MOVE_DISTANCE_EXPONENT = 1.5f;
+	private static final float MOVE_DISTANCE_MAINFRAME_EXPONENT = 1.25f;
 	private static final int ENEMY_KILL_POINTS = 100;
 	private static final int NEUTRALIZE_CONTROL_POINT_POINTS = 775;
-	private static final int CAPTURE_CONTROL_POINT_POINTS = 200;
+	private static final int CAPTURE_CONTROL_POINT_POINTS = 400;
 	private static final int PICKUP_POINTS = 50;
 
 	private static final float MOVE_MULTIPLIER = 1.0f;
 	private static final float SHOOT_MULTIPLIER = 1.0f;
 	private static final float SHIELD_MULTIPLIER = 1.0f;
-	private static final float PICKUP_MULTIPLIER = 2.0f;
-	
+	private static final float PICKUP_MULTIPLIER = 3.0f;
+
 	private static final float MOVE_DAMAGE_MULTIPLIER = 0.5f;
 
 	// The latest state of the world.
@@ -276,6 +277,7 @@ public class PlayerAI {
 
 				ControlPoint[] controlPoints = world.getControlPoints();
 				Pickup[] pickups = world.getPickups();
+				float distanceExponent = MOVE_DISTANCE_EXPONENT;
 
 				for (ControlPoint cp : controlPoints) {
 					// Only consider this cp if the current direction decreases
@@ -310,6 +312,15 @@ public class PlayerAI {
 						if (cp.isMainframe()) {
 							// add 400 extra points for mainframe
 							cpPoints += 400;
+							distanceExponent = MOVE_DISTANCE_MAINFRAME_EXPONENT;
+							//if we have no mainframes, but enemy does
+							if (numberOfMainframesControlled(friendlyUnits[i]
+									.getTeam()) == 0
+									&& numberOfMainframesControlled(enemyUnits[i]
+											.getTeam()) > 0) {
+								//rush for mainframe!!!
+								distanceExponent = 1;
+							}
 						} else {
 							// Don't go to enemy cp that are guarded
 							for (int j = 0; j < enemyUnits.length; j++) {
@@ -333,7 +344,7 @@ public class PlayerAI {
 					// Make the points for this cp drop off with distance
 					// according to x^MOVE_DISTANCE_EXPONENT
 					pointsForDirection += cpPoints
-							/ Math.pow(distanceToCP, MOVE_DISTANCE_EXPONENT);
+							/ Math.pow(distanceToCP, distanceExponent);
 				}
 
 				for (Pickup p : pickups) {
@@ -377,7 +388,8 @@ public class PlayerAI {
 
 				// Subtract the points that the enemy would get for us moving
 				// there and add the points that we would get for moving there
-				pointsForDirection -= damageTakenPoints * MOVE_DAMAGE_MULTIPLIER;
+				pointsForDirection -= damageTakenPoints
+						* MOVE_DAMAGE_MULTIPLIER;
 				pointsForDirection += maximumPotentialDamageDealtPoints(i,
 						directionPoint) * MOVE_DAMAGE_MULTIPLIER;
 
