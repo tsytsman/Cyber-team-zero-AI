@@ -30,6 +30,13 @@ public class PlayerAI {
 	private static final int REPAIR_KIT_HEALTH_AMOUNT = 20;
 	private static final float MOVE_DISTANCE_EXPONENT = 1.5f;
 	private static final int ENEMY_KILL_POINTS = 100;
+	private static final int NEUTRALIZE_CONTROL_POINT_POINTS = 50;
+	private static final int PICKUP_POINTS = 50;
+
+	private static final float MOVE_MULTIPLIER = 1.0f;
+	private static final float SHOOT_MULTIPLIER = 1.0f;
+	private static final float SHIELD_MULTIPLIER = 1.0f;
+	private static final float PICKUP_MULTIPLIER = 1.0f;
 
 	// The latest state of the world.
 	private World world;
@@ -292,12 +299,13 @@ public class PlayerAI {
 						}
 					} else if (cp.getControllingTeam() == Team
 							.opposite(friendlyUnits[i].getTeam())) {
-						// 50 extra points for neutralizing an opposing control
-						// point
 						if (cp.isMainframe())
 							// add 400 extra points for mainframe
 							cpPoints += 400;
-						cpPoints += 50;
+						// NEUTRALIZE_CONTROL_POINT_POINTS extra points for
+						// neutralizing an opposing control
+						// point
+						cpPoints += NEUTRALIZE_CONTROL_POINT_POINTS;
 					}
 					int distanceToCP = world.getPathLength(directionPoint,
 							cp.getPosition());
@@ -552,9 +560,10 @@ public class PlayerAI {
 				// move picking up repair kit will not be beneficial
 				return 0;
 			} else {
-				// net Health Gained * POINTS_PER_DAMAGE points + 50 for pickup
+				// net Health Gained * POINTS_PER_DAMAGE points + PICKUP_POINTS
+				// for pickup
 				return (REPAIR_KIT_HEALTH_AMOUNT - damageWillTake)
-						* POINTS_PER_DAMAGE + 50;
+						* POINTS_PER_DAMAGE + PICKUP_POINTS;
 			}
 		}
 		if (currentPickupType == PickupType.SHIELD) {
@@ -587,16 +596,16 @@ public class PlayerAI {
 			break;
 		case WEAPON_LASER_RIFLE:
 			if (currentWeapon == WeaponType.LASER_RIFLE) {
-				value = 50;
+				value = PICKUP_POINTS;
 			} else {
 				value = 150;
 			}
 			break;
 		case WEAPON_MINI_BLASTER:
 			if (currentWeapon == WeaponType.MINI_BLASTER) {
-				// if we have this weapon, we will get 50 points for picking it
-				// up
-				value = 50;
+				// if we have this weapon, we will get PICKUP_POINTS points for
+				// picking it up
+				value = PICKUP_POINTS;
 			} else {
 				// else, we have something better
 				value = 0;
@@ -604,7 +613,7 @@ public class PlayerAI {
 			break;
 		case WEAPON_RAIL_GUN:
 			if (currentWeapon == WeaponType.RAIL_GUN) {
-				value = 50;
+				value = PICKUP_POINTS;
 			} else {
 				// sniper rifle is the shit
 				value = 200;
@@ -612,7 +621,7 @@ public class PlayerAI {
 			break;
 		case WEAPON_SCATTER_GUN:
 			if (currentWeapon == WeaponType.SCATTER_GUN) {
-				value = 50;
+				value = PICKUP_POINTS;
 			} else {
 				value = 100;
 			}
@@ -677,19 +686,19 @@ public class PlayerAI {
 		// we can get this turn
 		int maxPoints = Integer.MIN_VALUE;
 		if (canMove) {
-			movePoints = pointsForMove(i);
+			movePoints = (int) (pointsForMove(i) * MOVE_MULTIPLIER);
 			maxPoints = Math.max(maxPoints, movePoints);
 		}
 		if (canShoot) {
-			shootPoints = pointsForShoot(i);
+			shootPoints = (int) (pointsForShoot(i) * SHOOT_MULTIPLIER);
 			maxPoints = Math.max(maxPoints, shootPoints);
 		}
 		if (canShield) {
-			shieldPoints = pointsForShield(i);
+			shieldPoints = (int) (pointsForShield(i) * SHIELD_MULTIPLIER);
 			maxPoints = Math.max(maxPoints, shieldPoints);
 		}
 		if (canPickup) {
-			pickupPoints = pointsForPickup(i);
+			pickupPoints = (int) (pointsForPickup(i) * PICKUP_MULTIPLIER);
 			maxPoints = Math.max(maxPoints, pickupPoints);
 		}
 
