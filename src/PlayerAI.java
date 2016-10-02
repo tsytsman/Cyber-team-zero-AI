@@ -34,6 +34,7 @@ public class PlayerAI {
 	private static final int NEUTRALIZE_CONTROL_POINT_POINTS = 775;
 	private static final int CAPTURE_CONTROL_POINT_POINTS = 400;
 	private static final int PICKUP_POINTS = 50;
+	private static final int POINTS_FOR_HELPING_OUT_FRIENDLY = 250;
 
 	private static final int NO_MAINFRAME_MAX_TEAM_DISTANCE = 5;
 	private static final int NO_MAINFRAME_GROUPING_POINTS = 250;
@@ -381,6 +382,63 @@ public class PlayerAI {
 
 				}
 
+				for (int j = 0; j < NUM_UNITS; j++) {
+					int pointsForEnemy = 0;
+					int closestEnemy = Integer.MAX_VALUE;
+					Point lastUnitLocation = friendlyUnits[j].getPosition();
+					// skip yourself
+					if (j == i)
+						continue;
+					if (friendlyUnits[j].getDamageTakenLastTurn() > 0) {
+						// if a friendly took damage last turn
+						// get an array of enemies that attacked that friendly
+						EnemyUnit enemyUnitsWhoAttacked[] = friendlyUnits[j]
+								.getEnemiesWhoShotMeLastTurn();
+						// if enemies that shot friendly are within 5 range, go
+						// towards them
+						for (int k = 0; k < enemyUnitsWhoAttacked.length; k++) {
+							if (world.getPathLength(
+									friendlyUnits[i].getPosition(),
+									enemyUnitsWhoAttacked[k].getPosition()) < 6
+									&& world.getPathLength(friendlyUnits[i]
+											.getPosition(),
+											enemyUnitsWhoAttacked[k]
+													.getPosition()) < closestEnemy) {
+								// Only consider going there if the current
+								// direction
+								// decreases the path length by 1
+								if (getDifferenceInPathLengths(
+										friendlyUnits[i].getPosition(),
+										directionPoint,
+										enemyUnitsWhoAttacked[k].getPosition()) != 1) {
+									continue;
+								} else {
+									pointsForEnemy = POINTS_FOR_HELPING_OUT_FRIENDLY;
+									lastUnitLocation = enemyUnitsWhoAttacked[k]
+											.getPosition();
+									closestEnemy = world.getPathLength(
+											friendlyUnits[i].getPosition(),
+											enemyUnitsWhoAttacked[k]
+													.getPosition());
+								}
+
+							}
+						}
+					} else {
+						continue;
+					}
+
+					// Make the points for this pickup drop off with distance
+					// according to x^MOVE_DISTANCE_EXPONENT
+					int distanceToEnemy = world.getPathLength(directionPoint,
+							lastUnitLocation);
+					if (distanceToEnemy < 3)
+						distanceToEnemy = 3;
+					pointsForDirection += pointsForEnemy
+							/ distanceToEnemy;
+
+				}
+
 				int potentialDamageTakenByStaying = maximumPotentialDamageTaken(friendlyUnits[i]
 						.getPosition());
 				int damageTakenByStayingPoints = potentialDamageTakenByStaying
@@ -389,7 +447,7 @@ public class PlayerAI {
 				if (friendlyUnits[i].getHealth() <= potentialDamageTakenByStaying) {
 					damageTakenByStayingPoints += ENEMY_KILL_POINTS;
 				}
-
+				
 				// Calculate the damage and points received by the enemy for
 				// damaging us in the new position
 				int potentialDamageTakenByMoving = maximumPotentialDamageTaken(directionPoint);
