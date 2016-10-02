@@ -231,22 +231,30 @@ public class PlayerAI {
 					// the path length by 1
 					if (getDifferenceInPathLengths(
 							friendlyUnits[i].getPosition(), directionPoint,
-							cp.getPosition()) != 1) {
+							cp.getPosition()) < 0) {
 						continue;
 					}
 					int cpPoints = 200;
 					if (cp.getControllingTeam() == friendlyUnits[i].getTeam()) {
-						// Prevent movement towards our own cp
-						continue;
+						cpPoints = 0;
+						//defend the point if there are enemies around
+						for (int j = 0; j < enemyUnits.length; j++){
+							int pathLengthFromEnemy = world.getPathLength(enemyUnits[j].getPosition(), cp.getPosition());
+							if(pathLengthFromEnemy < 4){
+								if (pathLengthFromEnemy == 0)
+									pathLengthFromEnemy = 1;
+								cpPoints += (3 - pathLengthFromEnemy) * 100;
+							}
+						}
 					} else if (cp.getControllingTeam() == Team
 							.opposite(friendlyUnits[i].getTeam())) {
 						// 50 extra points for neutralizing an opposing control
 						// point
+						if (cp.isMainframe())
+							// add 400 extra points for mainframe
+							cpPoints += 400;
 						cpPoints += 50;
 					}
-					if (cp.isMainframe())
-						// add 400 extra points for mainframe
-						cpPoints += 400;
 					pointsForDirection += cpPoints
 							/ Math.pow(
 									world.getPathLength(directionPoint,
@@ -258,7 +266,7 @@ public class PlayerAI {
 					// decreases the path length by 1
 					if (getDifferenceInPathLengths(
 							friendlyUnits[i].getPosition(), directionPoint,
-							p.getPosition()) != 1) {
+							p.getPosition()) < 0) {
 						continue;
 					}
 					int pickupPoints = valueOfPickup(i, p.getPickupType());
