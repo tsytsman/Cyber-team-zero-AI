@@ -292,6 +292,9 @@ public class PlayerAI {
 						cpPoints = 0;
 						// defend the point if there are enemies around
 						for (int j = 0; j < enemyUnits.length; j++) {
+							//ignore dead units
+							if (enemyUnits[j].getHealth()==0)
+								continue;
 							int pathLengthFromEnemy = world.getPathLength(
 									enemyUnits[j].getPosition(),
 									cp.getPosition());
